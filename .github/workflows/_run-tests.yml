@@ -105,17 +105,27 @@ jobs:
 
       - name: Install Playwright browsers
         shell: bash
+        env:
+          PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: "120000"
         run: |
           PROJECT="${{ inputs.project }}"
           BROWSERS="$PROJECT"
+          INSTALL_ARGS=""
 
           if [ "$PROJECT" = "all" ]; then
             BROWSERS="chromium firefox webkit"
           fi
 
+          if [ "$PROJECT" = "chromium" ] || [ "$PROJECT" = "all" ]; then
+            INSTALL_ARGS="--only-shell"
+          fi
+
+          echo "Installing Playwright system dependencies for: $BROWSERS"
+          npx playwright install-deps $BROWSERS
+
           for attempt in 1 2 3; do
-            echo "Installing Playwright browser dependencies, attempt $attempt"
-            if npx playwright install --with-deps $BROWSERS; then
+            echo "Installing Playwright browsers, attempt $attempt"
+            if timeout 5m npx playwright install $INSTALL_ARGS $BROWSERS; then
               exit 0
             fi
 
@@ -123,7 +133,8 @@ jobs:
             sleep 10
           done
 
-          npx playwright install --with-deps $BROWSERS
+          echo "Playwright browser install failed after 3 attempts"
+          exit 1
 
       - name: Start Juice Shop
         run: docker compose up -d
