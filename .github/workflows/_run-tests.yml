@@ -104,7 +104,26 @@ jobs:
         run: npm ci
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+        shell: bash
+        run: |
+          PROJECT="${{ inputs.project }}"
+          BROWSERS="$PROJECT"
+
+          if [ "$PROJECT" = "all" ]; then
+            BROWSERS="chromium firefox webkit"
+          fi
+
+          for attempt in 1 2 3; do
+            echo "Installing Playwright browser dependencies, attempt $attempt"
+            if npx playwright install --with-deps $BROWSERS; then
+              exit 0
+            fi
+
+            echo "Playwright browser install failed, retrying..."
+            sleep 10
+          done
+
+          npx playwright install --with-deps $BROWSERS
 
       - name: Start Juice Shop
         run: docker compose up -d
