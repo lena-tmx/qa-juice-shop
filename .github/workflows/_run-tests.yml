@@ -272,7 +272,7 @@ jobs:
           retention-days: 30
 
       - name: Prepare published report
-        if: ${{ always() && inputs.publish-pages-report }}
+        if: ${{ always() && inputs.publish-pages-report && github.event_name != 'pull_request' }}
         shell: bash
         run: |
           REPORT_PATH="${{ inputs.pages-report-path }}"
@@ -304,7 +304,7 @@ jobs:
           fi
 
       - name: Upload Pages artifact
-        if: ${{ always() && inputs.publish-pages-report }}
+        if: ${{ always() && inputs.publish-pages-report && github.event_name != 'pull_request' }}
         uses: actions/upload-pages-artifact@v3
         with:
           path: published-report
@@ -321,7 +321,7 @@ jobs:
           if [ -n "${{ steps.playwright_report.outputs.artifact-url }}" ]; then
             echo "[Open Playwright report artifact](${{ steps.playwright_report.outputs.artifact-url }})" >> "$GITHUB_STEP_SUMMARY"
           fi
-          if [ "${{ inputs.publish-pages-report }}" = "true" ]; then
+          if [ "${{ inputs.publish-pages-report }}" = "true" ] && [ "${{ github.event_name }}" != "pull_request" ]; then
             echo "A published ${{ inputs.pages-report-name }} link will appear after the Pages deployment job finishes." >> "$GITHUB_STEP_SUMMARY"
           fi
           if [ "${{ inputs.upload-allure }}" = "true" ]; then
@@ -330,7 +330,7 @@ jobs:
 
   deploy_report:
     name: Deploy Published Report
-    if: ${{ inputs.publish-pages-report }}
+    if: ${{ inputs.publish-pages-report && github.event_name != 'pull_request' }}
     needs: test
     runs-on: ubuntu-latest
     permissions:
