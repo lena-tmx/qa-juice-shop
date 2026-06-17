@@ -86,6 +86,7 @@ jobs:
     env:
       CI: "true"
       BASE_URL: "http://localhost:3000"
+      PLAYWRIGHT_VIDEO: "off"
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
       SLACK_CHANNEL_ID: ${{ vars.SLACK_CHANNEL_ID }}
       SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
@@ -109,33 +110,24 @@ jobs:
           PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: "120000"
         run: |
           PROJECT="${{ inputs.project }}"
-          BROWSERS="$PROJECT"
 
-          if [ "$PROJECT" = "all" ]; then
-            BROWSERS="firefox"
-          fi
-
-          if [ "$PROJECT" = "chromium" ]; then
+          if [ "$PROJECT" = "chromium" ] || [ "$PROJECT" = "all" ]; then
             echo "Using preinstalled Google Chrome on the GitHub runner"
-            google-chrome --version
-            exit 0
-          fi
+            CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable || true)"
 
-          echo "Installing Playwright system dependencies for: $BROWSERS"
-          npx playwright install-deps $BROWSERS
-
-          for attempt in 1 2 3; do
-            echo "Installing Playwright browsers, attempt $attempt"
-            if timeout 5m npx playwright install $BROWSERS; then
-              exit 0
+            if [ -z "$CHROME_PATH" ]; then
+              echo "Google Chrome is not available on this runner"
+              exit 1
             fi
 
-            echo "Playwright browser install failed, retrying..."
-            sleep 10
-          done
+            "$CHROME_PATH" --version
+            echo "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=$CHROME_PATH" >> "$GITHUB_ENV"
+          fi
 
-          echo "Playwright browser install failed after 3 attempts"
-          exit 1
+          if [ "$PROJECT" = "firefox" ] || [ "$PROJECT" = "all" ]; then
+            echo "Installing Firefox browser and dependencies"
+            npx playwright install --with-deps firefox
+          fi
 
       - name: Start Juice Shop
         run: docker compose up -d
@@ -197,6 +189,7 @@ jobs:
 
       - name: Upload Allure results
         if: ${{ always() && inputs.upload-allure }}
+        id: allure_results
         uses: actions/upload-artifact@v4
         with:
           name: allure-results
@@ -204,6 +197,7 @@ jobs:
 
       - name: Upload Allure report
         if: ${{ always() && inputs.upload-allure }}
+        id: allure_report
         uses: actions/upload-artifact@v4
         with:
           name: allure-report
@@ -254,7 +248,7 @@ jobs:
 
       - name: Upload console test results
         if: ${{ always() && inputs.upload-console-results }}
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           if-no-files-found: ignore
           name: test-results
@@ -264,7 +258,7 @@ jobs:
       - name: Upload Playwright report
         if: always()
         id: playwright_report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           if-no-files-found: ignore
           name: playwright-report
@@ -320,6 +314,12 @@ jobs:
           echo "Playwright HTML report is uploaded as artifact \`playwright-report\`." >> "$GITHUB_STEP_SUMMARY"
           if [ -n "${{ steps.playwright_report.outputs.artifact-url }}" ]; then
             echo "[Open Playwright report artifact](${{ steps.playwright_report.outputs.artifact-url }})" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ -n "${{ steps.allure_results.outputs.artifact-url }}" ]; then
+            echo "[Open Allure results artifact](${{ steps.allure_results.outputs.artifact-url }})" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ -n "${{ steps.allure_report.outputs.artifact-url }}" ]; then
+            echo "[Open Allure report artifact](${{ steps.allure_report.outputs.artifact-url }})" >> "$GITHUB_STEP_SUMMARY"
           fi
           if [ "${{ inputs.publish-pages-report }}" = "true" ] && [ "${{ github.event_name }}" != "pull_request" ]; then
             echo "A published ${{ inputs.pages-report-name }} link will appear after the Pages deployment job finishes." >> "$GITHUB_STEP_SUMMARY"

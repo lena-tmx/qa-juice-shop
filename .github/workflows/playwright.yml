@@ -53,7 +53,7 @@ jobs:
       timeout-minutes: 60
       upload-allure: true
       upload-console-results: false
-      publish-pages-report: ${{ github.event_name != 'pull_request' }}
+      publish-pages-report: true
       pages-report-path: allure-report
       pages-report-name: Allure report
       notify-slack: true
