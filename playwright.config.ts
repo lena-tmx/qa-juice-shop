@@ -9,6 +9,10 @@ const tagsFilterPattern = env.tagsFilter.length
   ? new RegExp(env.tagsFilter.map(escapeRegExp).join('|'))
   : undefined;
 
+const chromiumUse = process.env.CI
+  ? { ...devices['Desktop Chrome'], channel: 'chrome' as const }
+  : { ...devices['Desktop Chrome'] };
+
 export default defineConfig({
   testDir: './tests',
   grep: tagsFilterPattern,
@@ -30,7 +34,7 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: chromiumUse,
     },
     {
       name: 'firefox',

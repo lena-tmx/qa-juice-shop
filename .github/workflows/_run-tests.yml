@@ -110,14 +110,15 @@ jobs:
         run: |
           PROJECT="${{ inputs.project }}"
           BROWSERS="$PROJECT"
-          INSTALL_ARGS=""
 
           if [ "$PROJECT" = "all" ]; then
-            BROWSERS="chromium firefox webkit"
+            BROWSERS="firefox"
           fi
 
-          if [ "$PROJECT" = "chromium" ] || [ "$PROJECT" = "all" ]; then
-            INSTALL_ARGS="--only-shell"
+          if [ "$PROJECT" = "chromium" ]; then
+            echo "Using preinstalled Google Chrome on the GitHub runner"
+            google-chrome --version
+            exit 0
           fi
 
           echo "Installing Playwright system dependencies for: $BROWSERS"
@@ -125,7 +126,7 @@ jobs:
 
           for attempt in 1 2 3; do
             echo "Installing Playwright browsers, attempt $attempt"
-            if timeout 5m npx playwright install $INSTALL_ARGS $BROWSERS; then
+            if timeout 5m npx playwright install $BROWSERS; then
               exit 0
             fi
 
