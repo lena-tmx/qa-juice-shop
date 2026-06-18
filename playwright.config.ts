@@ -9,6 +9,15 @@ const tagsFilterPattern = env.tagsFilter.length
   ? new RegExp(env.tagsFilter.map(escapeRegExp).join('|'))
   : undefined;
 
+const chromiumUse = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+  ? {
+      ...devices['Desktop Chrome'],
+      launchOptions: {
+        executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
+      },
+    }
+  : { ...devices['Desktop Chrome'] };
+
 export default defineConfig({
   testDir: './tests',
   grep: tagsFilterPattern,
@@ -22,15 +31,15 @@ export default defineConfig({
     baseURL: env.baseUrl,
     actionTimeout: 30000,
     headless: true,
-    trace: 'on-first-retry',
+    trace: process.env.CI ? 'retain-on-failure' : 'off',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    video: process.env.CI ? 'off' : 'retain-on-failure',
   },
 
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: chromiumUse,
     },
     {
       name: 'firefox',

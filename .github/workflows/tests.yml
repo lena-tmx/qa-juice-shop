@@ -47,11 +47,11 @@ jobs:
       workflow-name: Manual QA Tests
       node-version: "24"
       timeout-minutes: 60
-      upload-allure: false
+      upload-allure: true
       upload-console-results: true
       publish-pages-report: true
-      pages-report-path: playwright-report
-      pages-report-name: Playwright report
+      pages-report-path: allure-report
+      pages-report-name: Allure report
       notify-slack: true
       stop-containers: true
     secrets: inherit

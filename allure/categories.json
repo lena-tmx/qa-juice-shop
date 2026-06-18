@@ -1,0 +1,27 @@
+[
+  {
+    "name": "Product Defects",
+    "matchedStatuses": ["failed"],
+    "messageRegex": ".*expect.*|.*AssertionError.*"
+  },
+  {
+    "name": "UI Defects",
+    "matchedStatuses": ["failed"],
+    "traceRegex": ".*locator.*|.*Timeout.*|.*click.*|.*visible.*"
+  },
+  {
+    "name": "Infrastructure Issues",
+    "matchedStatuses": ["broken"],
+    "messageRegex": ".*ECONNREFUSED.*|.*net::ERR.*|.*browser.*|.*context.*"
+  },
+  {
+    "name": "Test Data Issues",
+    "matchedStatuses": ["failed", "broken"],
+    "messageRegex": ".*user.*already exists.*|.*invalid credentials.*|.*test data.*"
+  },
+  {
+    "name": "Security Issues",
+    "matchedStatuses": ["failed"],
+    "messageRegex": ".*security.*|.*xss.*|.*csrf.*|.*auth.*|.*token.*"
+  }
+]
