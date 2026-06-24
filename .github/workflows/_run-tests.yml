@@ -105,10 +105,12 @@ jobs:
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
 
-      - name: Install Playwright browsers
+      - name: Install Playwright dependencies
         shell: bash
         run: |
           PROJECT="${{ inputs.project }}"
+
+          npx playwright install ffmpeg
 
           if [ "$PROJECT" = "firefox" ] || [ "$PROJECT" = "all" ]; then
             npx playwright install --with-deps firefox
