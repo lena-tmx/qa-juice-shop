@@ -33,26 +33,26 @@ The repository is organized into framework code and test suites.
 
 ### Main directories
 
-- [src/pages](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/src/pages) page objects for UI interactions
-- [src/components](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/src/components) reusable UI components used by pages
-- [src/modals](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/src/modals) modal and banner objects
-- [src/api/clients](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/src/api/clients) low-level API client logic
-- [src/api/services](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/src/api/services) high-level domain API services
-- [src/data](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/src/data) test data and data factories
-- [src/utils](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/src/utils) framework utilities such as environment parsing and step decorators
-- [tests/ui](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/tests/ui) UI test suite
-- [tests/api](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/tests/api) API test suite
-- [tests/security](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/tests/security) security-focused test suite
-- [tests/attributes](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/tests/attributes) shared test metadata such as tags
-- [tests/fixtures.ts](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/tests/fixtures.ts) custom Playwright fixtures exposed to tests
+- [src/pages](src/pages) page objects for UI interactions
+- [src/components](src/components) reusable UI components used by pages
+- [src/modals](src/modals) modal and banner objects
+- [src/api/clients](src/api/clients) low-level API client logic
+- [src/api/services](src/api/services) high-level domain API services
+- [src/data](src/data) test data and data factories
+- [src/utils](src/utils) framework utilities such as environment parsing and step decorators
+- [tests/ui](tests/ui) UI test suite
+- [tests/api](tests/api) API test suite
+- [tests/security](tests/security) security-focused test suite
+- [tests/attributes](tests/attributes) shared test metadata such as tags
+- [tests/fixtures.ts](tests/fixtures.ts) custom Playwright fixtures exposed to tests
 
 ### Key framework files
 
-- [playwright.config.ts](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/playwright.config.ts) Playwright configuration, reporters, projects, and tag filtering
-- [src/utils/env.ts](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/src/utils/env.ts) environment variable parsing and normalization
-- [src/utils/step.ts](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/src/utils/step.ts) decorator for wrapping methods with `test.step`
-- [tests/attributes/tags.ts](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/tests/attributes/tags.ts) central storage for reusable test tags
-- [docker-compose.yml](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/docker-compose.yml) local Juice Shop container setup
+- [playwright.config.ts](playwright.config.ts) Playwright configuration, reporters, projects, and tag filtering
+- [src/utils/env.ts](src/utils/env.ts) environment variable parsing and normalization
+- [src/utils/step.ts](src/utils/step.ts) decorator for wrapping methods with `test.step`
+- [tests/attributes/tags.ts](tests/attributes/tags.ts) central storage for reusable test tags
+- [docker-compose.yml](docker-compose.yml) local Juice Shop container setup
 
 ## Local setup
 
@@ -85,7 +85,6 @@ Create or update `.env`:
 ```dotenv
 BASE_URL=http://localhost:3000
 TAGS_FILTER=
-START_WEB_SERVER=false
 CI=false
 ```
 
@@ -93,8 +92,7 @@ CI=false
 
 - `BASE_URL` base URL of the tested application
 - `TAGS_FILTER` optional comma-separated list of tags for test filtering
-- `START_WEB_SERVER` reserved flag for environments that manage app startup from the test runner
-- `CI` CI mode flag
+- `CI` CI mode flag (enables trace-on-failure, disables video)
 
 ## Running tests
 
@@ -139,26 +137,26 @@ The project currently includes three main groups of automated tests.
 
 UI scenarios validate critical end-user flows in the browser:
 
-- [tests/ui/login.spec.ts](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/tests/ui/login.spec.ts) login with a valid user and successful logout
-- [tests/ui/search.spec.ts](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/tests/ui/search.spec.ts) product search and empty-state handling for missing results
-- [tests/ui/basket.spec.ts](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/tests/ui/basket.spec.ts) add-to-basket flow, basket visibility, item removal, and empty basket checks
+- [tests/ui/login.spec.ts](tests/ui/login.spec.ts) login with a valid user and successful logout
+- [tests/ui/search.spec.ts](tests/ui/search.spec.ts) product search and empty-state handling for missing results
+- [tests/ui/basket.spec.ts](tests/ui/basket.spec.ts) add-to-basket flow, basket visibility, item removal, and empty basket checks
 
 ### API tests
 
 API scenarios cover the main backend business flows:
 
-- [tests/api/auth.api.spec.ts](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/tests/api/auth.api.spec.ts) successful login and rejection of invalid credentials
-- [tests/api/products.api.spec.ts](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/tests/api/products.api.spec.ts) product catalog retrieval, positive search, and empty search results
-- [tests/api/basket.api.spec.ts](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/tests/api/basket.api.spec.ts) authorized basket updates, unauthorized add attempts, and basket item retrieval
+- [tests/api/auth.api.spec.ts](tests/api/auth.api.spec.ts) successful login and rejection of invalid credentials
+- [tests/api/products.api.spec.ts](tests/api/products.api.spec.ts) product catalog retrieval, positive search, and empty search results
+- [tests/api/basket.api.spec.ts](tests/api/basket.api.spec.ts) authorized basket updates, unauthorized add attempts, and basket item retrieval
 
 ### Security tests
 
 Security-oriented scenarios check common vulnerable areas in Juice Shop:
 
-- [tests/security/basket.security.spec.ts](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/tests/security/basket.security.spec.ts) broken access control and IDOR checks around basket access and basket modification
-- [tests/security/xss.security.spec.ts](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/tests/security/xss.security.spec.ts) reflected payload handling in search API responses and script execution attempts in UI search
+- [tests/security/basket.security.spec.ts](tests/security/basket.security.spec.ts) broken access control and IDOR checks around basket access and basket modification
+- [tests/security/xss.security.spec.ts](tests/security/xss.security.spec.ts) reflected payload handling in search API responses and script execution attempts in UI search
 
-The suite is organized with reusable tags from [tests/attributes/tags.ts](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/tests/attributes/tags.ts), which makes it possible to run smoke, auth, search, basket, UI, API, and security-focused subsets in local runs and in GitHub Actions.
+The suite is organized with reusable tags from [tests/attributes/tags.ts](tests/attributes/tags.ts), which makes it possible to run smoke, auth, search, basket, UI, API, and security-focused subsets in local runs and in GitHub Actions.
 
 ## Test architecture
 
@@ -173,7 +171,7 @@ This makes tests shorter, easier to read, and easier to maintain.
 
 ## Fixtures
 
-Custom fixtures are defined in [tests/fixtures.ts](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/tests/fixtures.ts).
+Custom fixtures are defined in [tests/fixtures.ts](tests/fixtures.ts).
 
 ### Available fixtures
 
@@ -192,7 +190,7 @@ test("should open home page", async ({ pages }) => {
 });
 ```
 
-The `pages` fixture is backed by [src/pages/PagesManager.ts](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/src/pages/PagesManager.ts). Add new page objects there so tests can use them through `pages` without importing each page class in [tests/fixtures.ts](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/tests/fixtures.ts).
+The `pages` fixture is backed by [src/pages/PagesManager.ts](src/pages/PagesManager.ts). Add new page objects there so tests can use them through `pages` without importing each page class in [tests/fixtures.ts](tests/fixtures.ts).
 
 The current `api` fixture exposes:
 
@@ -233,7 +231,7 @@ test(
 
 ## Writing API tests
 
-API tests should use domain services from [src/api/services](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/src/api/services) instead of constructing raw requests inside spec files.
+API tests should use domain services from [src/api/services](src/api/services) instead of constructing raw requests inside spec files.
 
 ### Recommended flow
 
@@ -271,19 +269,19 @@ test(
 
 ## Page objects and components
 
-Page objects live in [src/pages](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/src/pages). Shared UI parts live in [src/components](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/src/components) and [src/modals](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/src/modals).
+Page objects live in [src/pages](src/pages). Shared UI parts live in [src/components](src/components) and [src/modals](src/modals).
 
 ### Good practices
 
 - keep selectors inside page object or component classes
 - expose business-readable methods such as `open`, `login`, `search`, `addProductToBasket`
-- reuse common behavior through a base class such as [src/pages/BasePage.ts](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/src/pages/BasePage.ts)
-- expose new page objects through [src/pages/PagesManager.ts](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/src/pages/PagesManager.ts) instead of importing them directly in fixtures
+- reuse common behavior through a base class such as [src/pages/BasePage.ts](src/pages/BasePage.ts)
+- expose new page objects through [src/pages/PagesManager.ts](src/pages/PagesManager.ts) instead of importing them directly in fixtures
 - move banner or modal logic out of tests and into reusable objects
 
 ## API services
 
-API services live in [src/api/services](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/src/api/services). They wrap the lower-level HTTP client and expose domain-level operations.
+API services live in [src/api/services](src/api/services). They wrap the lower-level HTTP client and expose domain-level operations.
 
 ### Good practices
 
@@ -294,7 +292,7 @@ API services live in [src/api/services](/Users/lena/Documents/SecurityTesting/wo
 
 ## Using `@step`
 
-The framework includes a method decorator in [src/utils/step.ts](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/src/utils/step.ts) that wraps methods with `test.step`.
+The framework includes a method decorator in [src/utils/step.ts](src/utils/step.ts) that wraps methods with `test.step`.
 
 This improves readability in Playwright and Allure reports.
 
@@ -341,7 +339,7 @@ class Navbar {
 
 ### Framework tags storage
 
-The `Tags` class is defined in [tests/attributes/tags.ts](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/tests/attributes/tags.ts). It stores reusable tags for test categorization.
+The `Tags` class is defined in [tests/attributes/tags.ts](tests/attributes/tags.ts). It stores reusable tags for test categorization.
 
 Each tag is a string that starts with `@`. The current structure includes groups such as:
 
@@ -402,13 +400,13 @@ Tag filtering is applied on top of the selected npm script. For example, `npm ru
 
 ## Test data
 
-Test data helpers and factories live in [src/data](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/src/data).
+Test data helpers and factories live in [src/data](src/data).
 
 Use factories when dynamic data is required, especially for entities such as test users. This reduces collisions between runs and keeps setup logic reusable.
 
 ## Path aliases
 
-TypeScript path aliases are configured in [tsconfig.json](/Users/lena/Documents/SecurityTesting/worksaces/qa-juice-shop/tsconfig.json).
+TypeScript path aliases are configured in [tsconfig.json](tsconfig.json).
 
 Available aliases:
 
