@@ -21,6 +21,8 @@
     "allure:generate": "allure generate ./allure-results --clean -o ./allure-report",
     "allure:open": "allure open ./allure-report",
     "analyze": "tsx src/agents/analyzer/analyzeResults.ts",
+    "coverage": "tsx src/agents/coverage/collectCoverage.ts",
+    "coverage:har": "tsx src/agents/coverage/collectCoverage.ts test-results/har.json",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down -v"
   },
@@ -31,6 +33,7 @@
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
+    "@playwright/mcp": "^0.0.76",
     "@playwright/test": "^1.58.2",
     "@types/node": "^25.5.0",
     "allure-commandline": "^2.38.1",

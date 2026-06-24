@@ -16,15 +16,20 @@ It covers UI, API, and security-focused scenarios and includes reusable fixtures
 - UI, API, and security-focused test design
 - Reusable page objects, components, modals, fixtures, and service layers
 - Docker-based local environment setup
-- GitHub Actions CI execution
+- GitHub Actions CI execution with Playwright Docker image
 - Allure reporting and test result visualization
+- AI-assisted test generation via Playwright MCP
+- Automated test result analysis with flaky test detection
+- Feature, route, and API coverage tracking
 
 ## Tech stack
 
 - TypeScript
 - Playwright
+- Playwright MCP
 - Allure Playwright
 - Docker Compose
+- GitHub Actions
 - dotenv
 
 ## Project structure
@@ -40,6 +45,8 @@ The repository is organized into framework code and test suites.
 - [src/api/services](src/api/services) high-level domain API services
 - [src/data](src/data) test data and data factories
 - [src/utils](src/utils) framework utilities such as environment parsing and step decorators
+- [src/agents/analyzer](src/agents/analyzer) test result analyzer with flaky detection
+- [src/agents/coverage](src/agents/coverage) feature, route, and API coverage tracker
 - [tests/ui](tests/ui) UI test suite
 - [tests/api](tests/api) API test suite
 - [tests/security](tests/security) security-focused test suite
@@ -53,6 +60,7 @@ The repository is organized into framework code and test suites.
 - [src/utils/step.ts](src/utils/step.ts) decorator for wrapping methods with `test.step`
 - [tests/attributes/tags.ts](tests/attributes/tags.ts) central storage for reusable test tags
 - [docker-compose.yml](docker-compose.yml) local Juice Shop container setup
+- [.mcp.json](.mcp.json) Playwright MCP server configuration for Claude Code
 
 ## Local setup
 
@@ -92,7 +100,7 @@ CI=false
 
 - `BASE_URL` base URL of the tested application
 - `TAGS_FILTER` optional comma-separated list of tags for test filtering
-- `CI` CI mode flag (enables trace-on-failure, disables video)
+- `CI` CI mode flag (enables retries, JSON reporter)
 
 ## Running tests
 
@@ -472,6 +480,50 @@ Current workflow behavior:
 - `CI Tests` publishes the generated Allure report when available
 - `Manual QA Tests` publishes the Playwright HTML report
 - if the expected report folder is missing, the workflow falls back to the available HTML report or a diagnostic page
+
+## AI Agents
+
+The project includes automation agents for test analysis and coverage tracking.
+
+### Test Result Analyzer
+
+Parses Playwright JSON report to identify flaky tests, failures, and slowest tests. In CI, the analysis is posted as a Slack thread reply to the main test notification.
+
+```bash
+npm run analyze
+```
+
+Reads `test-report.json` (generated automatically in CI) and outputs a formatted analysis.
+
+### Coverage Tracker
+
+Generates a coverage report based on feature tags, visited routes (from HAR), and API endpoints.
+
+```bash
+npm run coverage
+npm run coverage:har
+```
+
+The report shows:
+- feature coverage matrix (which features have tests, which do not)
+- route coverage (which pages were visited during tests)
+- API endpoint coverage (which endpoints were called)
+- uncovered features, routes, and endpoints
+
+Reports are saved to `reports/coverage/`.
+
+### Playwright MCP
+
+The project is configured with [Playwright MCP](.mcp.json) for AI-assisted test generation via Claude Code. With Juice Shop running locally, Claude Code can open a browser, navigate the application, and generate test files that follow the project conventions.
+
+### CI Integration
+
+In GitHub Actions, tests run with `retries: 2` to detect flaky tests. After each run:
+
+1. Test results are analyzed automatically
+2. A Slack notification is sent with pass/fail/flaky counts
+3. A thread reply is posted with detailed analysis (flaky list, failure reasons, slowest tests)
+4. Playwright and Allure reports are published to GitHub Pages
 
 ## Recommended workflow for a new teammate
 

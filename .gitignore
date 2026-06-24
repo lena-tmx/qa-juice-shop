@@ -50,3 +50,6 @@ allure-report/
 # Analyzer output
 test-report.json
 analysis-message.txt
+
+# Coverage reports
+reports/

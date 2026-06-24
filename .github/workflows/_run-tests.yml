@@ -265,6 +265,16 @@ jobs:
             echo "Prepared fallback published-report page because $REPORT_PATH is missing"
           fi
 
+          # Bundle additional reports as subdirectories so each has a stable URL
+          if [ -d "playwright-report" ] && [ "$(ls -A playwright-report 2>/dev/null)" ]; then
+            cp -R playwright-report/. published-report/playwright-report/
+            echo "Bundled playwright-report/"
+          fi
+          if [ -d "allure-report" ] && [ "$(ls -A allure-report 2>/dev/null)" ]; then
+            cp -R allure-report/. published-report/allure-report/
+            echo "Bundled allure-report/"
+          fi
+
       - name: Upload Pages artifact
         if: ${{ always() && inputs.publish-pages-report }}
         uses: actions/upload-pages-artifact@v3
@@ -294,17 +304,14 @@ jobs:
         if: always()
         run: |
           echo "[GitHub Actions Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> "$GITHUB_STEP_SUMMARY"
-          echo "Playwright HTML report is uploaded as artifact \`playwright-report\`." >> "$GITHUB_STEP_SUMMARY"
-          if [ -n "${{ steps.playwright_report.outputs.artifact-url }}" ]; then
-            echo "[Open Playwright report artifact](${{ steps.playwright_report.outputs.artifact-url }})" >> "$GITHUB_STEP_SUMMARY"
-          fi
           if [ "${{ inputs.publish-pages-report }}" = "true" ]; then
-            echo "A published ${{ inputs.pages-report-name }} link will appear after the Pages deployment job finishes." >> "$GITHUB_STEP_SUMMARY"
+            echo "Published report links will appear after the Pages deployment job finishes." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ -n "${{ steps.playwright_report.outputs.artifact-url }}" ]; then
+            echo "[Download Playwright report artifact](${{ steps.playwright_report.outputs.artifact-url }})" >> "$GITHUB_STEP_SUMMARY"
           fi
           if [ -n "${{ steps.allure_report.outputs.artifact-url }}" ]; then
-            echo "[Open Allure report artifact](${{ steps.allure_report.outputs.artifact-url }})" >> "$GITHUB_STEP_SUMMARY"
-          elif [ "${{ inputs.upload-allure }}" = "true" ]; then
-            echo "Allure artifacts are uploaded as \`allure-results\` and \`allure-report\` when generated." >> "$GITHUB_STEP_SUMMARY"
+            echo "[Download Allure report artifact](${{ steps.allure_report.outputs.artifact-url }})" >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Analyze test results
@@ -346,10 +353,15 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-      - name: Add published report link to summary
+      - name: Add published report links to summary
         if: always()
         run: |
-          echo "[Open published ${{ inputs.pages-report-name }}](${{ steps.deployment.outputs.page_url }})" >> "$GITHUB_STEP_SUMMARY"
+          PAGE_URL="${{ steps.deployment.outputs.page_url }}"
+          echo "[Open published ${{ inputs.pages-report-name }}](${PAGE_URL})" >> "$GITHUB_STEP_SUMMARY"
+          echo "[Open Playwright report](${PAGE_URL}playwright-report/)" >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ inputs.upload-allure }}" = "true" ]; then
+            echo "[Open Allure report](${PAGE_URL}allure-report/)" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
   notify:
     name: Notify Slack
@@ -414,14 +426,12 @@ jobs:
             echo ":large_blue_circle: Flaky: ${{ needs.test.outputs.flaky }}"
             echo ""
             echo "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Open GitHub Actions run>"
-            if [ -n "${{ needs.deploy_report.outputs.page-url }}" ]; then
-              echo "<${{ needs.deploy_report.outputs.page-url }}|Open published ${{ inputs.pages-report-name }}>"
-            fi
-            if [ -n "${{ needs.test.outputs.allure-artifact-url }}" ]; then
-              echo "<${{ needs.test.outputs.allure-artifact-url }}|Open Allure report>"
-            fi
-            if [ -n "${{ needs.test.outputs.playwright-artifact-url }}" ]; then
-              echo "<${{ needs.test.outputs.playwright-artifact-url }}|Open Playwright report>"
+            PAGE_URL="${{ needs.deploy_report.outputs.page-url }}"
+            if [ -n "$PAGE_URL" ]; then
+              echo "<${PAGE_URL}playwright-report/|Open Playwright report>"
+              if [ "${{ inputs.upload-allure }}" = "true" ]; then
+                echo "<${PAGE_URL}allure-report/|Open Allure report>"
+              fi
             fi
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
