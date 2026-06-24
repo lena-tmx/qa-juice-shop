@@ -122,6 +122,12 @@ import { something } from "@src/utils/step";   // → src/utils/step.ts
 import { something } from "@tests/fixtures";    // → tests/fixtures.ts
 ```
 
+## Git Rules
+
+Never commit or push to the `main` branch without explicit user confirmation. Always ask before running `git commit`, `git push`, or any destructive git operation (`reset --hard`, `push --force`, `branch -D`). A single approval does not carry over — confirm each time.
+
+For feature work, prefer creating a separate branch and opening a PR.
+
 ## Repository Rules
 
 Use the existing architecture.
