@@ -74,6 +74,8 @@ jobs:
     name: ${{ inputs.workflow-name }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.58.2-noble
     permissions:
       contents: read
     outputs:
@@ -83,9 +85,15 @@ jobs:
       flaky: ${{ steps.test_summary.outputs.flaky }}
       playwright-artifact-url: ${{ steps.playwright_report.outputs.artifact-url }}
 
+    services:
+      juice-shop:
+        image: bkimminich/juice-shop
+        ports:
+          - 3000:3000
+
     env:
       CI: "true"
-      BASE_URL: "http://localhost:3000"
+      BASE_URL: "http://juice-shop:3000"
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
       SLACK_CHANNEL_ID: ${{ vars.SLACK_CHANNEL_ID }}
       SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
@@ -94,34 +102,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Setup Node
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ inputs.node-version }}
-          cache: npm
-
       - name: Install dependencies
         run: npm ci
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
 
-      - name: Install Playwright dependencies
-        shell: bash
-        run: |
-          PROJECT="${{ inputs.project }}"
-
-          npx playwright install ffmpeg
-
-          if [ "$PROJECT" = "firefox" ] || [ "$PROJECT" = "all" ]; then
-            npx playwright install --with-deps firefox
-          fi
-
-      - name: Start Juice Shop
-        run: docker compose up -d
-
       - name: Wait for Juice Shop
         run: |
-          timeout 90s bash -c 'until curl -f http://localhost:3000; do sleep 5; done'
+          timeout 90s bash -c 'until curl -sf http://juice-shop:3000 > /dev/null; do sleep 5; done'
 
       - name: Run selected tests
         id: run_tests
@@ -293,10 +281,6 @@ jobs:
           name: allure-report
           path: allure-report/
           retention-days: 30
-
-      - name: Stop containers
-        if: ${{ always() && inputs.stop-containers }}
-        run: docker compose down -v
 
       - name: Attach report links to workflow summary
         if: always()
