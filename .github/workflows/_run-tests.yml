@@ -84,6 +84,8 @@ jobs:
       skipped: ${{ steps.test_summary.outputs.skipped }}
       flaky: ${{ steps.test_summary.outputs.flaky }}
       playwright-artifact-url: ${{ steps.playwright_report.outputs.artifact-url }}
+      allure-artifact-url: ${{ steps.allure_report.outputs.artifact-url }}
+      analysis-message: ${{ steps.analyze.outputs.analysis-message }}
 
     services:
       juice-shop:
@@ -203,6 +205,11 @@ jobs:
           path: test-results.txt
           retention-days: 7
 
+      - name: Install Java for Allure
+        if: ${{ always() && inputs.upload-allure }}
+        run: |
+          apt-get update -qq && apt-get install -y -qq default-jre-headless > /dev/null
+
       - name: Generate Allure report
         if: ${{ always() && inputs.upload-allure }}
         run: |
@@ -275,6 +282,7 @@ jobs:
 
       - name: Upload Allure report
         if: ${{ always() && inputs.upload-allure }}
+        id: allure_report
         uses: actions/upload-artifact@v6
         with:
           if-no-files-found: ignore
@@ -293,8 +301,27 @@ jobs:
           if [ "${{ inputs.publish-pages-report }}" = "true" ]; then
             echo "A published ${{ inputs.pages-report-name }} link will appear after the Pages deployment job finishes." >> "$GITHUB_STEP_SUMMARY"
           fi
-          if [ "${{ inputs.upload-allure }}" = "true" ]; then
+          if [ -n "${{ steps.allure_report.outputs.artifact-url }}" ]; then
+            echo "[Open Allure report artifact](${{ steps.allure_report.outputs.artifact-url }})" >> "$GITHUB_STEP_SUMMARY"
+          elif [ "${{ inputs.upload-allure }}" = "true" ]; then
             echo "Allure artifacts are uploaded as \`allure-results\` and \`allure-report\` when generated." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Analyze test results
+        if: ${{ always() && inputs.notify-slack }}
+        id: analyze
+        shell: bash
+        run: |
+          if [ -f test-report.json ]; then
+            npx tsx src/agents/analyzer/analyzeResults.ts test-report.json analysis-message.txt
+            {
+              echo 'analysis-message<<EOF'
+              cat analysis-message.txt
+              echo 'EOF'
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "No test-report.json found, skipping analysis"
+            echo "analysis-message=" >> "$GITHUB_OUTPUT"
           fi
 
   deploy_report:
@@ -389,17 +416,42 @@ jobs:
             echo "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Open GitHub Actions run>"
             if [ -n "${{ needs.deploy_report.outputs.page-url }}" ]; then
               echo "<${{ needs.deploy_report.outputs.page-url }}|Open published ${{ inputs.pages-report-name }}>"
-            elif [ -n "${{ needs.test.outputs.playwright-artifact-url }}" ]; then
-              echo "<${{ needs.test.outputs.playwright-artifact-url }}|Open Playwright report artifact>"
-            else
-              echo "Artifact: \`playwright-report\`"
+            fi
+            if [ -n "${{ needs.test.outputs.allure-artifact-url }}" ]; then
+              echo "<${{ needs.test.outputs.allure-artifact-url }}|Open Allure report>"
+            fi
+            if [ -n "${{ needs.test.outputs.playwright-artifact-url }}" ]; then
+              echo "<${{ needs.test.outputs.playwright-artifact-url }}|Open Playwright report>"
             fi
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
 
       - name: Notify in Slack
+        id: slack_notify
         if: ${{ always() && steps.slack_message.outputs.message != '' }}
         uses: slackapi/slack-github-action@v1.27.0
         with:
           channel-id: ${{ vars.SLACK_CHANNEL_ID }}
           slack-message: ${{ steps.slack_message.outputs.message }}
+
+      - name: Post analysis as thread reply
+        if: ${{ always() && steps.slack_notify.outputs.ts != '' && needs.test.outputs.analysis-message != '' }}
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        shell: bash
+        run: |
+          ANALYSIS_TEXT=$(cat <<'ANALYSIS_EOF'
+          ${{ needs.test.outputs.analysis-message }}
+          ANALYSIS_EOF
+          )
+
+          PAYLOAD=$(jq -n \
+            --arg channel "${{ vars.SLACK_CHANNEL_ID }}" \
+            --arg thread_ts "${{ steps.slack_notify.outputs.ts }}" \
+            --arg text "$ANALYSIS_TEXT" \
+            '{channel: $channel, thread_ts: $thread_ts, text: $text}')
+
+          curl -s -X POST https://slack.com/api/chat.postMessage \
+            -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD"

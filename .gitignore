@@ -46,3 +46,7 @@ node_modules/
 # Allure
 allure-results/
 allure-report/
+
+# Analyzer output
+test-report.json
+analysis-message.txt

@@ -12,6 +12,7 @@ const tagsFilterPattern = env.tagsFilter.length
 export default defineConfig({
   testDir: './tests',
   grep: tagsFilterPattern,
+  retries: env.ci ? 2 : 0,
   workers: 2,
   timeout: 120000,
   expect: {
@@ -42,5 +43,6 @@ export default defineConfig({
     ['list'],
     ['html', { open: 'never' }],
     ['allure-playwright'],
+    ...(env.ci ? [['json', { outputFile: 'test-report.json' }] as const] : []),
   ],
 });
