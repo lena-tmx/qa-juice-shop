@@ -301,6 +301,20 @@ async closeIfVisible(): Promise<void> { ... }
 
 Avoid wrapping every small locator action in a step. Use steps for meaningful business actions.
 
+## Language Rules
+
+All code-level text must be in English. This includes:
+
+- Code comments
+- Variable, function, and class names
+- Test titles and `test.describe` group names
+- Allure `@step()` descriptions
+- Commit messages and PR descriptions
+- Documentation files (README.md, docs/, reports/)
+- CI workflow names and log messages
+
+No exceptions — the codebase is English-only.
+
 ## Naming Conventions
 
 | Type | Pattern | Example |
