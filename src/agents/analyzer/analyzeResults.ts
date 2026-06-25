@@ -90,15 +90,22 @@ function formatDuration(ms: number): string {
 const FEATURE_MAP: Record<string, string> = {
   login: "Auth",
   auth: "Auth",
+  registration: "Registration",
   search: "Search",
   basket: "Basket",
   products: "Products",
+  checkout: "Checkout",
+  address: "Address",
+  payment: "Payment",
+  orders: "Orders",
+  profile: "Profile",
+  admin: "Admin",
+  feedback: "Feedback",
   xss: "XSS",
   idor: "IDOR",
-  registration: "Registration",
-  profile: "Profile",
-  checkout: "Checkout",
-  feedback: "Feedback",
+  "sql-injection": "SQL Injection",
+  headers: "Headers",
+  "access-control": "Access Control",
 };
 
 function detectFeature(test: AnalyzedTest): string {
