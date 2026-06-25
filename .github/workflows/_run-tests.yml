@@ -334,7 +334,7 @@ jobs:
 
   deploy_report:
     name: Deploy Published Report
-    if: ${{ inputs.publish-pages-report }}
+    if: ${{ always() && inputs.publish-pages-report }}
     needs: test
     runs-on: ubuntu-latest
     permissions:
