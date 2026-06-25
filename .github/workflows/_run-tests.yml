@@ -334,7 +334,7 @@ jobs:
 
   deploy_report:
     name: Deploy Published Report
-    if: ${{ always() && inputs.publish-pages-report }}
+    if: ${{ always() && inputs.publish-pages-report && github.event_name != 'pull_request' }}
     needs: test
     runs-on: ubuntu-latest
     permissions:
