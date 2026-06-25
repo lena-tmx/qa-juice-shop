@@ -427,10 +427,15 @@ jobs:
             echo ""
             echo "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Open GitHub Actions run>"
             PAGE_URL="${{ needs.deploy_report.outputs.page-url }}"
+            if [ -z "$PAGE_URL" ] && [ "${{ inputs.publish-pages-report }}" = "true" ]; then
+              OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+              REPO=$(echo "${{ github.repository }}" | cut -d'/' -f2)
+              PAGE_URL="https://${OWNER}.github.io/${REPO}/"
+            fi
             if [ -n "$PAGE_URL" ]; then
-              echo "<${PAGE_URL}playwright-report/|Open Playwright report>"
+              echo "<${PAGE_URL}playwright-report/|:bar_chart: Open Playwright report>"
               if [ "${{ inputs.upload-allure }}" = "true" ]; then
-                echo "<${PAGE_URL}allure-report/|Open Allure report>"
+                echo "<${PAGE_URL}allure-report/|:bar_chart: Open Allure report>"
               fi
             fi
             echo 'EOF'

@@ -1,19 +1,18 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "preserve",
+    "moduleResolution": "bundler",
     "lib": ["ES2022", "DOM"],
     "types": ["node", "@playwright/test"],
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "baseUrl": ".",
     "paths": {
-      "@src/*": ["src/*"],
-      "@tests/*": ["tests/*"]
+      "@src/*": ["./src/*"],
+      "@tests/*": ["./tests/*"]
     }
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts", "old.playwright.config.ts"]
+  "include": ["src/**/*.ts", "tests/**/*.ts", "playwright.config.ts"]
 }
