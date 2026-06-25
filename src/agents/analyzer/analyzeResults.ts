@@ -198,7 +198,7 @@ function formatSlackMessage(tests: AnalyzedTest[]): string {
     }
   }
 
-  return lines.join("\n");
+  return lines.join("\n") + "\n";
 }
 
 const inputPath = process.argv[2] || "test-report.json";

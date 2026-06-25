@@ -324,6 +324,7 @@ jobs:
             {
               echo 'analysis-message<<EOF'
               cat analysis-message.txt
+              echo ""
               echo 'EOF'
             } >> "$GITHUB_OUTPUT"
           else
