@@ -87,6 +87,33 @@ function formatDuration(ms: number): string {
   return `${minutes}m ${remaining}s`;
 }
 
+const FEATURE_MAP: Record<string, string> = {
+  login: "Auth",
+  auth: "Auth",
+  registration: "Registration",
+  search: "Search",
+  basket: "Basket",
+  products: "Products",
+  checkout: "Checkout",
+  address: "Address",
+  payment: "Payment",
+  orders: "Orders",
+  profile: "Profile",
+  admin: "Admin",
+  feedback: "Feedback",
+  xss: "XSS",
+  idor: "IDOR",
+  "sql-injection": "SQL Injection",
+  headers: "Headers",
+  "access-control": "Access Control",
+};
+
+function detectFeature(test: AnalyzedTest): string {
+  const filename = test.file.split("/").pop() || "";
+  const base = filename.replace(/\.(api|ui|security|spec)\.spec\.ts$/, "").replace(/\.spec\.ts$/, "");
+  return FEATURE_MAP[base] || base.charAt(0).toUpperCase() + base.slice(1);
+}
+
 function formatSlackMessage(tests: AnalyzedTest[]): string {
   if (tests.length === 0) {
     return ":mag: *Test Analysis*\n\nNo test results found.";
@@ -133,6 +160,29 @@ function formatSlackMessage(tests: AnalyzedTest[]): string {
     }
   }
 
+  const problematic = tests.filter((t) => t.status === "unexpected" || t.status === "flaky");
+  if (problematic.length > 0) {
+    const byFeature = new Map<string, { failed: number; flaky: number; tests: string[] }>();
+    for (const t of problematic) {
+      const feature = detectFeature(t);
+      const entry = byFeature.get(feature) || { failed: 0, flaky: 0, tests: [] };
+      if (t.status === "unexpected") entry.failed++;
+      if (t.status === "flaky") entry.flaky++;
+      entry.tests.push(t.title);
+      byFeature.set(feature, entry);
+    }
+
+    lines.push("");
+    lines.push(":warning: *Affected Features:*");
+    const sortedFeatures = Array.from(byFeature.entries()).sort((a, b) => (b[1].failed + b[1].flaky) - (a[1].failed + a[1].flaky));
+    for (const [feature, data] of sortedFeatures) {
+      const parts: string[] = [];
+      if (data.failed > 0) parts.push(`${data.failed} failed`);
+      if (data.flaky > 0) parts.push(`${data.flaky} flaky`);
+      lines.push(`  • *${feature}* — ${parts.join(", ")}`);
+    }
+  }
+
   const slowest = [...tests]
     .filter((t) => t.status !== "skipped")
     .sort((a, b) => b.duration - a.duration)
@@ -148,7 +198,7 @@ function formatSlackMessage(tests: AnalyzedTest[]): string {
     }
   }
 
-  return lines.join("\n");
+  return lines.join("\n") + "\n";
 }
 
 const inputPath = process.argv[2] || "test-report.json";
