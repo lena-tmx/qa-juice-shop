@@ -1,4 +1,4 @@
-import { APIRequestContext, expect } from "@playwright/test";
+import { APIRequestContext } from "@playwright/test";
 import { ApiClient } from "../clients/ApiClient";
 import { createTestUser, type TestUser } from "@src/data/factories/userFactory";
 
@@ -77,5 +77,28 @@ export class AuthService extends ApiClient {
       user,
       auth,
     };
+  }
+
+  async whoami(token: string) {
+    return this.get("/rest/user/whoami", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  }
+
+  async changePassword(
+    token: string,
+    current: string,
+    newPassword: string,
+  ) {
+    return this.get(
+      `/rest/user/change-password?current=${encodeURIComponent(current)}&new=${encodeURIComponent(newPassword)}&repeat=${encodeURIComponent(newPassword)}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+  }
+
+  async getSecurityQuestions() {
+    return this.get("/api/SecurityQuestions");
   }
 }
