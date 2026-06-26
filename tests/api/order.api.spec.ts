@@ -6,7 +6,7 @@ test.describe("Order API", () => {
   test(
     "should return empty order history for new user",
     {
-      tag: [Tags.TEST_TYPE.API, Tags.FEATURE.ORDERS, Tags.SCENARIO.POSITIVE],
+      tag: [Tags.TEST_TYPE.API, Tags.FEATURE.ORDER_HISTORY, Tags.SCENARIO.POSITIVE],
     },
     async ({ api }) => {
       const auth = await api.auth.registerAndLogin(createTestUser());
@@ -22,7 +22,7 @@ test.describe("Order API", () => {
   test(
     "should not return order history without authentication",
     {
-      tag: [Tags.TEST_TYPE.API, Tags.FEATURE.ORDERS, Tags.SCENARIO.NEGATIVE],
+      tag: [Tags.TEST_TYPE.API, Tags.FEATURE.ORDER_HISTORY, Tags.SCENARIO.NEGATIVE],
     },
     async ({ api }) => {
       const response = await api.order.getHistory("");

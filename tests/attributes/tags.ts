@@ -16,7 +16,7 @@ export class Tags {
     CHECKOUT: "@checkout",
     ADDRESS: "@address",
     PAYMENT: "@payment",
-    ORDERS: "@orders",
+    ORDER_HISTORY: "@order-history",
     PROFILE: "@profile",
     ADMIN: "@admin",
     FEEDBACK: "@feedback",

@@ -176,7 +176,7 @@ function resolveTag(group: string, value: string): string {
       CHECKOUT: "@checkout",
       ADDRESS: "@address",
       PAYMENT: "@payment",
-      ORDERS: "@orders",
+      ORDER_HISTORY: "@order-history",
       PROFILE: "@profile",
       ADMIN: "@admin",
       FEEDBACK: "@feedback",
