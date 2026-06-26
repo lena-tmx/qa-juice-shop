@@ -13,4 +13,8 @@ export class ProductsService extends ApiClient {
   async search(query: string) {
     return this.get(`/rest/products/search?q=${encodeURIComponent(query)}`);
   }
+
+  async getById(id: number) {
+    return this.get(`/api/Products/${id}`);
+  }
 }
