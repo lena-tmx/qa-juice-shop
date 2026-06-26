@@ -44,4 +44,17 @@ export class BasketService extends ApiClient {
     const body = await response.json();
     return body.data;
   }
+
+  async updateItem(token: string, itemId: number, quantity: number) {
+    return this.put(`/api/BasketItems/${itemId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      data: { quantity },
+    });
+  }
+
+  async deleteItem(token: string, itemId: number) {
+    return this.delete(`/api/BasketItems/${itemId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  }
 }
