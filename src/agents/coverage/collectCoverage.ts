@@ -401,10 +401,51 @@ function formatReport(report: CoverageReport): string {
   return lines.join("\n");
 }
 
+function formatSlackSummary(report: CoverageReport): string {
+  const lines: string[] = [];
+  const pct = report.summary.totalFeatures > 0
+    ? ((report.summary.coveredFeatures / report.summary.totalFeatures) * 100).toFixed(0)
+    : "0";
+
+  lines.push(":clipboard: *Test Coverage*");
+  lines.push("");
+  lines.push(
+    `:bar_chart: *Features:* ${report.summary.coveredFeatures}/${report.summary.totalFeatures} (${pct}%) | ${report.summary.totalTests} tests`,
+  );
+
+  const byType = new Map<string, number>();
+  for (const feature of report.featureMatrix) {
+    for (const t of feature.tests) {
+      for (const type of t.types) {
+        byType.set(type, (byType.get(type) || 0) + 1);
+      }
+    }
+  }
+  const typeParts = Array.from(byType.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([type, count]) => `${type}: ${count}`);
+  if (typeParts.length > 0) {
+    lines.push(`:test_tube: *By type:* ${typeParts.join(" | ")}`);
+  }
+
+  if (report.uncoveredFeatures.length > 0) {
+    lines.push("");
+    lines.push(`:warning: *Uncovered features (${report.uncoveredFeatures.length}):*`);
+    lines.push(`  ${report.uncoveredFeatures.join(", ")}`);
+  }
+
+  lines.push("");
+  return lines.join("\n");
+}
+
 // Main
+const args = process.argv.slice(2);
+const slackMode = args.includes("--slack");
+const filteredArgs = args.filter((a) => a !== "--slack");
+
 const testsDir = path.resolve(process.cwd(), "tests");
-const harPath = process.argv[2] || "";
-const outputPath = process.argv[3] || "reports/coverage/coverage-report.md";
+const harPath = filteredArgs[0] || "";
+const outputPath = filteredArgs[1] || (slackMode ? "coverage-message.txt" : "reports/coverage/coverage-report.md");
 
 const tests = parseTestFiles(testsDir);
 const featureMatrix = buildFeatureMatrix(tests);
@@ -442,6 +483,6 @@ if (!fs.existsSync(outputDir)) {
   fs.mkdirSync(outputDir, { recursive: true });
 }
 
-const markdown = formatReport(report);
-fs.writeFileSync(outputPath, markdown);
-console.log(markdown);
+const output = slackMode ? formatSlackSummary(report) : formatReport(report);
+fs.writeFileSync(outputPath, output);
+console.log(output);

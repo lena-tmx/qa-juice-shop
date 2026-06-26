@@ -321,16 +321,21 @@ jobs:
         run: |
           if [ -f test-report.json ]; then
             npx tsx src/agents/analyzer/analyzeResults.ts test-report.json analysis-message.txt
-            {
-              echo 'analysis-message<<EOF'
-              cat analysis-message.txt
-              echo ""
-              echo 'EOF'
-            } >> "$GITHUB_OUTPUT"
           else
-            echo "No test-report.json found, skipping analysis"
-            echo "analysis-message=" >> "$GITHUB_OUTPUT"
+            echo ":mag: *Test Analysis*" > analysis-message.txt
+            echo "" >> analysis-message.txt
+            echo "No test results JSON found." >> analysis-message.txt
           fi
+
+          npx tsx src/agents/coverage/collectCoverage.ts --slack "" coverage-message.txt
+
+          {
+            echo 'analysis-message<<EOF'
+            cat analysis-message.txt
+            echo ""
+            cat coverage-message.txt
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
 
   deploy_report:
     name: Deploy Published Report

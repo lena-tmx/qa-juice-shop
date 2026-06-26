@@ -26,6 +26,7 @@
     "analyze": "tsx src/agents/analyzer/analyzeResults.ts",
     "coverage": "tsx src/agents/coverage/collectCoverage.ts",
     "coverage:har": "tsx src/agents/coverage/collectCoverage.ts test-results/har.json",
+    "coverage:slack": "tsx src/agents/coverage/collectCoverage.ts --slack",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down -v"
   },
