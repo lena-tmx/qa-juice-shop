@@ -133,8 +133,11 @@ npm run test:debug
 ```bash
 npm run test:smoke
 npm run test:auth
+npm run test:registration
 npm run test:search
 npm run test:basket
+npm run test:products
+npm run test:checkout
 ```
 
 ## Main test coverage
@@ -153,9 +156,16 @@ UI scenarios validate critical end-user flows in the browser:
 
 API scenarios cover the main backend business flows:
 
-- [tests/api/auth.api.spec.ts](tests/api/auth.api.spec.ts) successful login and rejection of invalid credentials
+- [tests/api/auth.api.spec.ts](tests/api/auth.api.spec.ts) login with valid and invalid credentials
+- [tests/api/auth.extended.api.spec.ts](tests/api/auth.extended.api.spec.ts) registration, duplicate email, security questions, password change
 - [tests/api/products.api.spec.ts](tests/api/products.api.spec.ts) product catalog retrieval, positive search, and empty search results
+- [tests/api/products.detail.api.spec.ts](tests/api/products.detail.api.spec.ts) get product by id, non-existent product
 - [tests/api/basket.api.spec.ts](tests/api/basket.api.spec.ts) authorized basket updates, unauthorized add attempts, and basket item retrieval
+- [tests/api/basket.crud.api.spec.ts](tests/api/basket.crud.api.spec.ts) update quantity, delete item, get basket by id
+- [tests/api/address.api.spec.ts](tests/api/address.api.spec.ts) create address, list addresses, unauthorized access
+- [tests/api/card.api.spec.ts](tests/api/card.api.spec.ts) add payment card, list cards, unauthorized access
+- [tests/api/feedback.api.spec.ts](tests/api/feedback.api.spec.ts) submit feedback with captcha, reject without captcha
+- [tests/api/order.api.spec.ts](tests/api/order.api.spec.ts) order history retrieval, unauthorized access
 
 ### Security tests
 
@@ -205,6 +215,10 @@ The current `api` fixture exposes:
 - `auth`
 - `products`
 - `basket`
+- `address`
+- `card`
+- `feedback`
+- `order`
 
 ## Writing UI tests
 
@@ -352,7 +366,7 @@ The `Tags` class is defined in [tests/attributes/tags.ts](tests/attributes/tags.
 Each tag is a string that starts with `@`. The current structure includes groups such as:
 
 - `TEST_TYPE`: `@ui`, `@api`, `@security`, `@smoke`, `@regression`
-- `FEATURE`: `@auth`, `@search`, `@basket`, `@products`, `@xss`
+- `FEATURE`: `@auth`, `@registration`, `@search`, `@basket`, `@products`, `@checkout`, `@address`, `@payment`, `@order-history`, `@profile`, `@admin`, `@feedback`, `@xss`, `@idor`, `@sql-injection`, `@session`, `@headers`, `@access-control`, `@input-validation`
 - `SCENARIO`: `@positive`, `@negative`
 - `PRIORITY`: `@critical`
 
@@ -408,9 +422,15 @@ Tag filtering is applied on top of the selected npm script. For example, `npm ru
 
 ## Test data
 
-Test data helpers and factories live in [src/data](src/data).
+Test data helpers and factories live in [src/data](src/data). The project uses `@faker-js/faker` for realistic random data generation.
 
-Use factories when dynamic data is required, especially for entities such as test users. This reduces collisions between runs and keeps setup logic reusable.
+Available factories:
+
+- `createTestUser()` — user with unique email, password, and random security question
+- `createTestAddress()` — address with random name, street, city, country
+- `createTestCard()` — payment card with valid number and future expiry
+
+Use factories when dynamic data is required. This reduces collisions between parallel runs and keeps setup logic reusable.
 
 ## Path aliases
 
@@ -502,6 +522,7 @@ Generates a coverage report based on feature tags, visited routes (from HAR), an
 ```bash
 npm run coverage
 npm run coverage:har
+npm run coverage:slack
 ```
 
 The report shows:
@@ -510,7 +531,7 @@ The report shows:
 - API endpoint coverage (which endpoints were called)
 - uncovered features, routes, and endpoints
 
-Reports are saved to `reports/coverage/`.
+Reports are saved to `reports/coverage/`. The `coverage:slack` command outputs a compact Slack-formatted summary used in CI thread replies.
 
 ### Playwright MCP
 
@@ -521,9 +542,9 @@ The project is configured with [Playwright MCP](.mcp.json) for AI-assisted test 
 In GitHub Actions, tests run with `retries: 2` to detect flaky tests. After each run:
 
 1. Test results are analyzed automatically
-2. A Slack notification is sent with pass/fail/flaky counts
-3. A thread reply is posted with detailed analysis (flaky list, failure reasons, slowest tests)
-4. Playwright and Allure reports are published to GitHub Pages
+2. A Slack notification is sent with pass/fail/flaky counts and report links
+3. A thread reply is posted with detailed analysis (flaky list, failure reasons, affected features, slowest tests) and coverage summary (covered/uncovered features)
+4. Playwright and Allure reports are published to GitHub Pages (on push to main; skipped on PRs)
 
 ## Recommended workflow for a new teammate
 
