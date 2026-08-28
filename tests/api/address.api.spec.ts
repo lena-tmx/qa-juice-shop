@@ -1,3 +1,4 @@
+import { qase } from 'playwright-qase-reporter';
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 import { createTestUser } from "@src/data/factories/userFactory";
@@ -5,7 +6,7 @@ import { createTestAddress } from "@src/data/factories/addressFactory";
 
 test.describe("Address API", () => {
   test(
-    "should create a new address",
+    qase(9, "should create a new address"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.ADDRESS, Tags.SCENARIO.POSITIVE],
     },
@@ -24,7 +25,7 @@ test.describe("Address API", () => {
   );
 
   test(
-    "should return empty address list for new user",
+    qase(14, "should return empty address list for new user"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.ADDRESS, Tags.SCENARIO.POSITIVE],
     },
@@ -40,7 +41,7 @@ test.describe("Address API", () => {
   );
 
   test(
-    "should not create address without authentication",
+    qase(18, "should not create address without authentication"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.ADDRESS, Tags.SCENARIO.NEGATIVE],
     },

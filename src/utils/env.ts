@@ -1,8 +1,3 @@
-// import "dotenv/config";
-
-// export const env = {
-//   baseUrl: process.env.BASE_URL ?? "http://localhost:3000",
-// };
 import "dotenv/config";
 
 function toBoolean(value: string | undefined, defaultValue: boolean): boolean {

@@ -1,10 +1,11 @@
+import { qase } from 'playwright-qase-reporter';
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 import { createTestUser } from "@src/data/factories/userFactory";
 
 test.describe("Basket CRUD API", () => {
   test(
-    "should update basket item quantity",
+    qase(8, "should update basket item quantity"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.BASKET, Tags.SCENARIO.POSITIVE],
     },
@@ -32,7 +33,7 @@ test.describe("Basket CRUD API", () => {
   );
 
   test(
-    "should delete basket item",
+    qase(10, "should delete basket item"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.BASKET, Tags.SCENARIO.POSITIVE],
     },
@@ -54,7 +55,7 @@ test.describe("Basket CRUD API", () => {
   );
 
   test(
-    "should return basket by id",
+    qase(11, "should return basket by id"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.BASKET, Tags.SCENARIO.POSITIVE],
     },

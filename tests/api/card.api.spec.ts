@@ -1,3 +1,4 @@
+import { qase } from 'playwright-qase-reporter';
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 import { createTestUser } from "@src/data/factories/userFactory";
@@ -5,7 +6,7 @@ import { createTestCard } from "@src/data/factories/cardFactory";
 
 test.describe("Card API", () => {
   test(
-    "should add a payment card",
+    qase(13, "should add a payment card"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PAYMENT, Tags.SCENARIO.POSITIVE],
     },
@@ -23,7 +24,7 @@ test.describe("Card API", () => {
   );
 
   test(
-    "should return empty card list for new user",
+    qase(15, "should return empty card list for new user"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PAYMENT, Tags.SCENARIO.POSITIVE],
     },
@@ -39,7 +40,7 @@ test.describe("Card API", () => {
   );
 
   test(
-    "should reject adding a payment card without authentication — expects 401",
+    qase(67, "should reject adding a payment card without authentication — expects 401"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PAYMENT, Tags.SCENARIO.NEGATIVE],
     },

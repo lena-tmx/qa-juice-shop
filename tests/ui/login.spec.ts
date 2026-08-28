@@ -1,3 +1,4 @@
+import { qase } from 'playwright-qase-reporter';
 import { users } from "@src/data/users";
 import { TestData } from "@src/utils/TestData";
 import { test } from "../fixtures";
@@ -16,7 +17,7 @@ test.describe(`Login UI`, () => {
   });
 
   test(
-    `should login existing user`,
+    qase(85, `should login existing user`),
     {
       tag: [Tags.TEST_TYPE.UI, Tags.FEATURE.AUTH],
     },
@@ -30,7 +31,7 @@ test.describe(`Login UI`, () => {
   );
 
   test(
-    `should login and then logout successfully`,
+    qase(1, `should login and then logout successfully`),
     {
       tag: [Tags.TEST_TYPE.UI, Tags.FEATURE.AUTH],
     },

@@ -1,3 +1,4 @@
+import { qase } from 'playwright-qase-reporter';
 import { users } from "@src/data/users";
 import { TestData } from "@src/utils/TestData";
 import { test } from "../fixtures";
@@ -17,7 +18,7 @@ test.describe(`Basket UI`, () => {
   });
 
   test(
-    `should add product to basket and see it there`,
+    qase(83, `should add product to basket and see it there`),
     { tag: [Tags.TEST_TYPE.UI, Tags.FEATURE.BASKET] },
     async ({ pages }) => {
       await pages.homePage.open();
@@ -34,7 +35,7 @@ test.describe(`Basket UI`, () => {
   );
 
   test(
-    `should add and remove product to basket and see it empty`,
+    qase(84, `should add and remove product to basket and see it empty`),
     { tag: [Tags.TEST_TYPE.UI, Tags.FEATURE.BASKET] },
     async ({ pages }) => {
       await pages.homePage.open();
