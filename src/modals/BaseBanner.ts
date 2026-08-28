@@ -11,17 +11,11 @@ export abstract class BaseBanner {
     locator: Locator,
     timeout = 5000,
   ): Promise<void> {
-    try {
-      await locator.waitFor({ state: "hidden", timeout });
-      return;
-    } catch {}
-
-    try {
-      await locator.waitFor({ state: "detached", timeout });
-      return;
-    } catch {}
-
-    await expect(locator).not.toBeVisible({ timeout });
+    // toBeHidden() already accepts "detached from DOM" as satisfying
+    // "hidden" in a single bounded poll, so there's no need to chain
+    // separate hidden/detached/not-visible waits with their own timeout
+    // each — that would triple the worst-case wait for no benefit.
+    await expect(locator).toBeHidden({ timeout });
   }
 
   protected async clickAndWaitToDisappear(
