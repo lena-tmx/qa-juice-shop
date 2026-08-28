@@ -60,7 +60,7 @@ export class HomePage extends BasePage {
     await addButton.click();
   }
 
-  @step((productName: string) => `Add product to basket: ${productName}`)
+  @step((productName: string) => `Add product to basket and wait for confirmation: ${productName}`)
   async addProductToBasketWithWait(productName: string): Promise<void> {
     await this.dismissBlockingBanners();
 

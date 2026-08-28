@@ -8,14 +8,14 @@ export class CardService extends ApiClient {
     super(request);
   }
 
-  @step()
+  @step("Retrieve saved payment cards")
   async getAll(token: string) {
     return this.get("/api/Cards/", {
       headers: { Authorization: `Bearer ${token}` },
     });
   }
 
-  @step((token: string, payload: CreateCardRequest) => `Create card: ${payload.fullName}`)
+  @step((token: string, payload: CreateCardRequest) => `Add payment card for cardholder: ${payload.fullName}`)
   async create(token: string, payload: CreateCardRequest) {
     return this.post("/api/Cards/", {
       headers: {

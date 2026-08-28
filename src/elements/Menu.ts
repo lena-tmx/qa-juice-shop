@@ -1,5 +1,6 @@
 import { BaseElement } from "./BaseElement";
 import { expect, Locator, Page } from "@playwright/test";
+import { step } from "@src/utils/step";
 
 export class Menu extends BaseElement {
   readonly trigger: Locator;
@@ -29,6 +30,7 @@ export class Menu extends BaseElement {
     await item.click();
   }
 
+  @step((name: string) => `Select menu item: ${name}`)
   async selectItem(name: string) {
     const itemLocator = this.panel
       .last()
@@ -36,11 +38,13 @@ export class Menu extends BaseElement {
     await this.clickItem(itemLocator);
   }
 
+  @step((email: string) => `Verify menu shows user email: ${email}`)
   async expectUserEmail(email: string) {
     await this.open();
     await expect(this.panel.last()).toContainText(email);
   }
 
+  @step((text: string) => `Verify menu does not contain: ${text}`)
   async expectContentNotPresent(text: string) {
     await this.open();
     await expect(this.panel.last()).not.toContainText(text);
