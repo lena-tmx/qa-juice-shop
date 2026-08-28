@@ -13,7 +13,6 @@ export class Menu extends BaseElement {
     this.panel = this.page.locator(".mat-mdc-menu-panel");
   }
 
-  @step("Open menu")
   async open() {
     const isExpanded = await this.trigger.getAttribute("aria-expanded");
     if (isExpanded !== "true") {
@@ -22,7 +21,6 @@ export class Menu extends BaseElement {
     }
   }
 
-  @step("Click menu item")
   async clickItem(selector: string | Locator) {
     await this.open();
     const item =
@@ -40,13 +38,13 @@ export class Menu extends BaseElement {
     await this.clickItem(itemLocator);
   }
 
-  @step("Verify menu shows user email")
+  @step((email: string) => `Verify menu shows user email: ${email}`)
   async expectUserEmail(email: string) {
     await this.open();
     await expect(this.panel.last()).toContainText(email);
   }
 
-  @step("Verify menu content is not present")
+  @step((text: string) => `Verify menu does not contain: ${text}`)
   async expectContentNotPresent(text: string) {
     await this.open();
     await expect(this.panel.last()).not.toContainText(text);

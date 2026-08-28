@@ -236,6 +236,15 @@ New services must:
 2. Accept `APIRequestContext` in constructor
 3. Be registered in `ApiServices` (index.ts)
 
+### Request/response reporting
+
+`ApiClient`'s `get`/`post`/`put`/`delete` automatically attach the outgoing request as a
+runnable `curl` command and the response (status + body) to the current Allure step, for
+every API call, with no extra code needed in services or tests. `Authorization` header
+values are masked (`Bearer ***`) in the attachment. This is why an API test's Allure step
+doesn't need to restate the outcome in its name — expand the step to see exactly what was
+sent and what came back.
+
 ## Test Data Rules
 
 Use data files and factories.
