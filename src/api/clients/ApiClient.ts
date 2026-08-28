@@ -7,6 +7,10 @@ type RequestOptions = {
   data?: unknown;
 };
 
+function shellQuote(value: string): string {
+  return `'${value.replace(/'/g, `'\\''`)}'`;
+}
+
 export class ApiClient {
   constructor(protected readonly request: APIRequestContext) {}
 
@@ -26,12 +30,12 @@ export class ApiClient {
     }
 
     const fullUrl = url.startsWith("http") ? url : `${env.baseUrl}${url}`;
-    const curlParts = [`curl -X ${method} '${fullUrl}'`];
+    const curlParts = [`curl -X ${method} ${shellQuote(fullUrl)}`];
     for (const [key, value] of Object.entries(headers)) {
-      curlParts.push(`-H '${key}: ${value}'`);
+      curlParts.push(`-H ${shellQuote(`${key}: ${value}`)}`);
     }
     if (options?.data !== undefined) {
-      curlParts.push(`-d '${JSON.stringify(options.data)}'`);
+      curlParts.push(`-d ${shellQuote(JSON.stringify(options.data))}`);
     }
     await attachment("Request", curlParts.join(" \\\n  "), ContentType.TEXT);
 
