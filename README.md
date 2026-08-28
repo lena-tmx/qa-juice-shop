@@ -1,4 +1,4 @@
-![Tests](https://github.com/LenaChe-1234/qa-juice-shop/actions/workflows/playwright.yml/badge.svg)
+![Tests](https://github.com/lena-tmx/qa-juice-shop/actions/workflows/playwright.yml/badge.svg)
 
 # qa-juice-shop
 
@@ -18,6 +18,8 @@ It covers UI, API, and security-focused scenarios and includes reusable fixtures
 - Docker-based local environment setup
 - GitHub Actions CI execution with Playwright Docker image
 - Allure reporting and test result visualization
+- Qase TestOps integration with stable test case IDs
+- Parallel CI execution across two Playwright shards
 - AI-assisted test generation via Playwright MCP
 - Automated test result analysis with flaky test detection
 - Feature, route, and API coverage tracking
@@ -100,7 +102,12 @@ CI=false
 
 - `BASE_URL` base URL of the tested application
 - `TAGS_FILTER` optional comma-separated list of tags for test filtering
-- `CI` CI mode flag (enables retries, JSON reporter)
+- `CI` CI mode flag (enables blob and JSON reporters used to merge shard results)
+- `QASE_MODE` Qase reporter mode; use `testops` to upload results or `off` to disable it
+- `QASE_TESTOPS_API_TOKEN` Qase API token (store it as the `QASE_API_TOKEN` GitHub Actions secret in CI)
+- `QASE_TESTOPS_PROJECT` Qase project code; defaults to `ZEN`
+- `QASE_TESTOPS_RUN_ID` optional existing Qase run ID
+- `QASE_TESTOPS_RUN_TITLE` optional title for a newly created local run
 
 ## Running tests
 
@@ -450,7 +457,9 @@ import { Tags } from "@tests/attributes/tags";
 
 ## Reporting
 
-The project includes Allure reporting support.
+The project includes Playwright HTML, Allure, and Qase TestOps reporting support.
+
+Tests linked to Qase use stable case IDs in their Playwright declarations. In CI, one shared Qase run is created before the two test shards start. Both shards upload results into that run, and the workflow completes it only after both runners finish. This prevents duplicate Qase runs and keeps browser executions associated with the same test run.
 
 ### Run tests with Allure
 
@@ -497,7 +506,10 @@ Where to find the published report link after a run:
 
 Current workflow behavior:
 
-- `CI Tests` publishes the generated Allure report when available
+- `CI Tests` runs the suite on two parallel Playwright shards
+- shard blob, JSON, and Allure results are merged before totals are calculated
+- `CI Tests` publishes the merged Playwright and Allure reports when available
+- Qase upload is enabled only when the `QASE_API_TOKEN` repository secret is available
 - `Manual QA Tests` publishes the Playwright HTML report
 - if the expected report folder is missing, the workflow falls back to the available HTML report or a diagnostic page
 
@@ -539,12 +551,14 @@ The project is configured with [Playwright MCP](.mcp.json) for AI-assisted test 
 
 ### CI Integration
 
-In GitHub Actions, tests run with `retries: 2` to detect flaky tests. After each run:
+In GitHub Actions, retries are disabled so product defects are not hidden by automatic reruns. The suite is distributed between two independent runners, and their results are merged before reporting. After each run:
 
-1. Test results are analyzed automatically
-2. A Slack notification is sent with pass/fail/flaky counts and report links
-3. A thread reply is posted with detailed analysis (flaky list, failure reasons, affected features, slowest tests) and coverage summary (covered/uncovered features)
-4. Playwright and Allure reports are published to GitHub Pages (on push to main; skipped on PRs)
+1. Both shards upload their results to one shared Qase run, which is then completed
+2. Playwright JSON/blob and Allure results from both shards are merged
+3. Test results are analyzed automatically
+4. A Slack notification is sent with aggregate pass/fail/skipped/flaky counts and report links
+5. A thread reply is posted with detailed analysis (failure reasons, affected features, slowest tests) and coverage summary (covered/uncovered features)
+6. Playwright and Allure reports are published to GitHub Pages (on push to main; skipped on PRs)
 
 ## Recommended workflow for a new teammate
 
