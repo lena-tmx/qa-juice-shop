@@ -182,15 +182,21 @@ jobs:
         shell: bash
         run: |
           TOTAL=$(( ${{ steps.test_summary.outputs.passed }} + ${{ steps.test_summary.outputs.failed }} + ${{ steps.test_summary.outputs.skipped }} + ${{ steps.test_summary.outputs.flaky }} ))
+          RUN_OUTCOME="${{ steps.run_tests.outcome }}"
 
-          if [ "${{ steps.run_tests.outcome }}" = "failure" ] && [ "$TOTAL" -eq 0 ]; then
-            echo "::error::Playwright не смог запустить тесты вообще — похоже на поломку инфраструктуры/конфига, а не на находку бага."
+          # Treat anything other than a clean success as a non-passing run,
+          # not just "failure" — if an earlier required step (e.g. "Wait for
+          # Juice Shop") already failed, run_tests never executes and its
+          # outcome is "skipped", which must still be classified as an infra
+          # failure rather than silently falling through to all_passed.
+          if [ "$RUN_OUTCOME" != "success" ] && [ "$TOTAL" -eq 0 ]; then
+            echo "::error::Playwright failed to run any tests at all — this looks like an infrastructure/config break, not a found bug."
             echo "status=infra_failure" >> "$GITHUB_OUTPUT"
             exit 1
           fi
 
-          if [ "${{ steps.run_tests.outcome }}" = "failure" ]; then
-            echo "::warning::Часть тестов упала на реальных ассертах (${{ steps.test_summary.outputs.failed }} failed) — найден баг в продукте."
+          if [ "$RUN_OUTCOME" != "success" ]; then
+            echo "::warning::Some tests failed on real assertions (${{ steps.test_summary.outputs.failed }} failed) — tests ran as expected and found a bug in the product."
             echo "status=bugs_found" >> "$GITHUB_OUTPUT"
           else
             echo "status=all_passed" >> "$GITHUB_OUTPUT"
@@ -437,11 +443,11 @@ jobs:
           RUN_STATUS="${{ needs.test.outputs.run-status }}"
 
           if [ "$RUN_STATUS" = "infra_failure" ]; then
-            HEADER=":rotating_light: *${{ inputs.workflow-name }}* — CI СЛОМАН на \`${{ github.ref_name }}\` (тесты не смогли запуститься)"
+            HEADER=":rotating_light: *${{ inputs.workflow-name }}* — CI IS BROKEN on \`${{ github.ref_name }}\` (tests failed to run)"
           elif [ "$RUN_STATUS" = "bugs_found" ]; then
-            HEADER=":bug: *${{ inputs.workflow-name }}* завершён для \`${{ github.ref_name }}\` — найдены баги в продукте"
+            HEADER=":bug: *${{ inputs.workflow-name }}* finished for \`${{ github.ref_name }}\` — bugs found in the product"
           else
-            HEADER=":white_check_mark: *${{ inputs.workflow-name }}* завершён для \`${{ github.ref_name }}\` — все тесты прошли"
+            HEADER=":white_check_mark: *${{ inputs.workflow-name }}* finished for \`${{ github.ref_name }}\` — all tests passed"
           fi
 
           {
