@@ -38,7 +38,7 @@ test.describe("Auth Extended API", () => {
   );
 
   test(
-    "should not register user with duplicate email",
+    "should reject registration with an already-used email — expects 400",
     {
       tag: [
         Tags.TEST_TYPE.API,
@@ -51,8 +51,9 @@ test.describe("Auth Extended API", () => {
       await api.auth.registerOrThrow(user);
 
       const response = await api.auth.register(user);
+      const status = response.status();
 
-      expect([400, 401, 422].includes(response.status())).toBeTruthy();
+      expect(status, `Expected 400, but got ${status}`).toBe(400);
     },
   );
 
@@ -76,7 +77,7 @@ test.describe("Auth Extended API", () => {
   );
 
   test(
-    "should not change password with wrong current password",
+    "should reject password change with wrong current password — expects 401",
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.AUTH, Tags.SCENARIO.NEGATIVE],
     },
@@ -90,10 +91,7 @@ test.describe("Auth Extended API", () => {
       );
       const status = response.status();
 
-      expect(
-        [400, 401].includes(status),
-        `Expected 400 or 401, but got ${status}`,
-      ).toBeTruthy();
+      expect(status, `Expected 401, but got ${status}`).toBe(401);
     },
   );
 });

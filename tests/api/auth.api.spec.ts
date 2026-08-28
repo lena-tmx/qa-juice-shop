@@ -30,7 +30,7 @@ test.describe("Auth API", () => {
   );
 
   test(
-    "should not login with invalid password",
+    "should reject login with incorrect password — expects 401",
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.AUTH, Tags.SCENARIO.NEGATIVE],
     },
@@ -38,10 +38,7 @@ test.describe("Auth API", () => {
       const response = await api.auth.login(user.email, "wrong-password");
       const status = response.status();
 
-      expect(
-        [400, 401].includes(status),
-        `Expected 400 or 401, but got ${status}`,
-      ).toBeTruthy();
+      expect(status, `Expected 401, but got ${status}`).toBe(401);
     },
   );
 });

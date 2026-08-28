@@ -19,7 +19,7 @@ test.describe("Products Detail API", () => {
   );
 
   test(
-    "should return 404 for non-existent product",
+    "should return 404 for non-existent product id",
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PRODUCTS, Tags.SCENARIO.NEGATIVE],
     },
@@ -27,10 +27,7 @@ test.describe("Products Detail API", () => {
       const response = await api.products.getById(99999);
       const status = response.status();
 
-      expect(
-        [404, 500].includes(status),
-        `Expected 404 or 500 for non-existent product, but got ${status}`,
-      ).toBeTruthy();
+      expect(status, `Expected 404, but got ${status}`).toBe(404);
     },
   );
 });

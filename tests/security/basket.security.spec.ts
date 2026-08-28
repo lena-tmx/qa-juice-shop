@@ -19,10 +19,7 @@ test.describe("Broken Access Control", () => {
       const response = await api.basket.getBasket(1);
 
       const status = response.status();
-      expect(
-        [401, 403].includes(status),
-        `Expected 401 or 403, but got ${status}`,
-      ).toBeTruthy();
+      expect(status, `Expected 401, but got ${status}`).toBe(401);
     },
   );
 
@@ -48,10 +45,11 @@ test.describe("Broken Access Control", () => {
       const response = await api.basket.getBasket(auth1.basketId, auth2.token);
 
       const status = response.status();
-      expect(
-        [401, 403].includes(status),
-        `Expected 401 or 403, but got ${status}`,
-      ).toBeTruthy();
+      // Expected (secure) behavior: 401, matching this app's own pattern for
+      // unauthorized basket access (see sibling test above). The app is
+      // currently vulnerable and returns 200 here — that's the bug this
+      // test exists to catch, not a flaky assertion.
+      expect(status, `Expected 401, but got ${status}`).toBe(401);
     },
   );
 
@@ -80,10 +78,7 @@ test.describe("Broken Access Control", () => {
       });
 
       const status = response.status();
-      expect(
-        [400, 401, 403].includes(status),
-        `Expected 400, 401 or 403, but got ${status}`,
-      ).toBeTruthy();
+      expect(status, `Expected 401, but got ${status}`).toBe(401);
     },
   );
 });

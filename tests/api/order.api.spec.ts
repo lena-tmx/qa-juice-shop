@@ -20,7 +20,7 @@ test.describe("Order API", () => {
   );
 
   test(
-    "should not return order history without authentication",
+    "should not return order history without authentication — expects 500",
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.ORDER_HISTORY, Tags.SCENARIO.NEGATIVE],
     },
@@ -28,10 +28,12 @@ test.describe("Order API", () => {
       const response = await api.order.getHistory("");
       const status = response.status();
 
-      expect(
-        [401, 403, 500].includes(status),
-        `Expected 401, 403, or 500, but got ${status}`,
-      ).toBeTruthy();
+      // Backend bug: unauthenticated /rest/order-history crashes with 500
+      // ("Blocked illegal activity...") instead of returning 401/403 like
+      // every other unauthenticated endpoint in this app. Verified stable
+      // across repeated requests. Should be fixed on the backend to return
+      // 401; this assertion documents the current (incorrect) behavior.
+      expect(status, `Expected 500, but got ${status}`).toBe(500);
     },
   );
 });
