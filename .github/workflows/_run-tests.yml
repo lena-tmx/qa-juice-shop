@@ -104,7 +104,7 @@ jobs:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
       SLACK_CHANNEL_ID: ${{ vars.SLACK_CHANNEL_ID }}
       SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-      QASE_MODE: ${{ inputs.upload-qase && 'testops' || 'off' }}
+      QASE_MODE: ${{ (inputs.upload-qase && secrets.QASE_API_TOKEN != '') && 'testops' || 'off' }}
       QASE_TESTOPS_PROJECT: "ZEN"
       QASE_TESTOPS_API_TOKEN: ${{ secrets.QASE_API_TOKEN }}
       QASE_TESTOPS_RUN_TITLE: "CI run #${{ github.run_number }} — ${{ github.ref_name }} (${{ inputs.suite }}/${{ inputs.project }})"
@@ -314,7 +314,7 @@ jobs:
         if: always()
         run: |
           echo "[GitHub Actions Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> "$GITHUB_STEP_SUMMARY"
-          if [ "${{ inputs.upload-qase }}" = "true" ]; then
+          if [ "${{ inputs.upload-qase }}" = "true" ] && [ -n "$QASE_TESTOPS_API_TOKEN" ]; then
             echo "Qase run uploaded — check the project dashboard: https://app.qase.io/run/ZEN/dashboard" >> "$GITHUB_STEP_SUMMARY"
           fi
           if [ "${{ inputs.publish-pages-report }}" = "true" ]; then
@@ -457,7 +457,7 @@ jobs:
                 echo "<${PAGE_URL}allure-report/|:bar_chart: Open Allure report>"
               fi
             fi
-            if [ "${{ inputs.upload-qase }}" = "true" ]; then
+            if [ "${{ inputs.upload-qase }}" = "true" ] && [ -n "${{ secrets.QASE_API_TOKEN }}" ]; then
               echo "<https://app.qase.io/run/ZEN/dashboard|:bar_chart: Open Qase run>"
             fi
             echo 'EOF'
