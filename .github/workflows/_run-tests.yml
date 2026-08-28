@@ -108,7 +108,7 @@ jobs:
       QASE_MODE: ${{ (inputs.upload-qase && secrets.QASE_API_TOKEN != '') && 'testops' || 'off' }}
       QASE_TESTOPS_PROJECT: "ZEN"
       QASE_TESTOPS_API_TOKEN: ${{ secrets.QASE_API_TOKEN }}
-      QASE_TESTOPS_RUN_TITLE: "CI run #${{ github.run_number }} — ${{ github.ref_name }} (${{ inputs.suite }}/${{ inputs.project }})"
+      QASE_TESTOPS_RUN_TITLE: "CI run #${{ github.run_number }} — ${{ github.head_ref || github.ref_name }} (${{ inputs.suite }}/${{ inputs.project }})"
       QASE_TESTOPS_RUN_COMPLETE: "true"
 
     steps:
@@ -173,22 +173,32 @@ jobs:
         id: test_summary
         shell: bash
         run: |
-          extract_total() {
-            local label="$1"
-            local value
-            if [ ! -f test-results.txt ]; then
-              echo "0"
-              return
-            fi
+          node <<'NODE'
+          const fs = require("node:fs");
 
-            value=$(grep -oE "[0-9]+ ${label}" test-results.txt | awk '{s+=$1} END {print s+0}')
-            echo "${value:-0}"
+          let stats = {};
+          if (fs.existsSync("test-report.json")) {
+            try {
+              stats = JSON.parse(fs.readFileSync("test-report.json", "utf8")).stats ?? {};
+            } catch (error) {
+              console.warn(`Could not parse test-report.json: ${error.message}`);
+            }
+          } else {
+            console.warn("test-report.json is unavailable; reporting zero test counts");
           }
 
-          echo "passed=$(extract_total passed)" >> "$GITHUB_OUTPUT"
-          echo "failed=$(extract_total failed)" >> "$GITHUB_OUTPUT"
-          echo "skipped=$(extract_total skipped)" >> "$GITHUB_OUTPUT"
-          echo "flaky=$(extract_total flaky)" >> "$GITHUB_OUTPUT"
+          const counts = {
+            passed: stats.expected ?? 0,
+            failed: stats.unexpected ?? 0,
+            skipped: stats.skipped ?? 0,
+            flaky: stats.flaky ?? 0,
+          };
+
+          fs.appendFileSync(
+            process.env.GITHUB_OUTPUT,
+            Object.entries(counts).map(([key, value]) => `${key}=${value}`).join("\n") + "\n",
+          );
+          NODE
 
       - name: Determine real failure vs found bug
         if: always()
@@ -416,6 +426,7 @@ jobs:
     env:
       SLACK_CHANNEL_ID: ${{ vars.SLACK_CHANNEL_ID }}
       SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+      DISPLAY_REF: ${{ github.head_ref || github.ref_name }}
     steps:
       - name: Debug Slack configuration
         if: always()
@@ -462,11 +473,11 @@ jobs:
           RUN_STATUS="${{ needs.test.outputs.run-status }}"
 
           if [ "$RUN_STATUS" = "infra_failure" ]; then
-            HEADER=":rotating_light: *${{ inputs.workflow-name }}* — CI IS BROKEN on \`${{ github.ref_name }}\` (tests failed to run)"
+            HEADER=":rotating_light: *${{ inputs.workflow-name }}* — CI IS BROKEN on \`${DISPLAY_REF}\` (tests failed to run)"
           elif [ "$RUN_STATUS" = "bugs_found" ]; then
-            HEADER=":bug: *${{ inputs.workflow-name }}* finished for \`${{ github.ref_name }}\` — bugs found in the product"
+            HEADER=":bug: *${{ inputs.workflow-name }}* finished for \`${DISPLAY_REF}\` — bugs found in the product"
           else
-            HEADER=":white_check_mark: *${{ inputs.workflow-name }}* finished for \`${{ github.ref_name }}\` — all tests passed"
+            HEADER=":white_check_mark: *${{ inputs.workflow-name }}* finished for \`${DISPLAY_REF}\` — all tests passed"
           fi
 
           {
