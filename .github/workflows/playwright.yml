@@ -52,6 +52,7 @@ jobs:
       node-version: "24"
       timeout-minutes: 60
       upload-allure: true
+      upload-qase: true
       upload-console-results: false
       publish-pages-report: true
       pages-report-path: allure-report
