@@ -160,13 +160,15 @@ jobs:
 
       - name: Run selected tests
         id: run_tests
-        continue-on-error: true
         shell: bash
         env:
           SUITE: ${{ inputs.suite }}
           PROJECT: ${{ inputs.project }}
           GREP: ${{ inputs.grep }}
         run: |
+          # Playwright returns 1 when assertions expose product defects. Capture
+          # that expected signal without making GitHub annotate this technical
+          # execution step as failed; the next step classifies the result.
           set -o pipefail
 
           if [ "$QASE_MODE" = "testops" ] && [ -n "$QASE_TESTOPS_API_TOKEN" ]; then
@@ -203,7 +205,19 @@ jobs:
           printf 'Running command:'
           printf ' %q' "${CMD[@]}"
           echo
+
+          set +e
           "${CMD[@]}" | tee test-results.txt
+          PIPE_STATUSES=("${PIPESTATUS[@]}")
+          set -e
+
+          PLAYWRIGHT_EXIT_CODE=${PIPE_STATUSES[0]}
+          if [ "${PIPE_STATUSES[1]}" -ne 0 ]; then
+            echo "::error::Could not capture Playwright console output."
+            exit 1
+          fi
+
+          echo "exit-code=$PLAYWRIGHT_EXIT_CODE" >> "$GITHUB_OUTPUT"
 
       - name: Collect test summary
         if: always()
@@ -244,20 +258,34 @@ jobs:
         run: |
           TOTAL=$(( ${{ steps.test_summary.outputs.passed }} + ${{ steps.test_summary.outputs.failed }} + ${{ steps.test_summary.outputs.skipped }} + ${{ steps.test_summary.outputs.flaky }} ))
           RUN_OUTCOME="${{ steps.run_tests.outcome }}"
+          PLAYWRIGHT_EXIT_CODE="${{ steps.run_tests.outputs.exit-code }}"
+
+          case "$PLAYWRIGHT_EXIT_CODE" in
+            ''|*[!0-9]*)
+              # A missing/invalid exit code means the runner did not reach the
+              # end of the Playwright command and is therefore an infra issue.
+              PLAYWRIGHT_EXIT_CODE=1
+              ;;
+          esac
 
           # Treat anything other than a clean success as a non-passing run,
           # not just "failure" — if an earlier required step (e.g. "Wait for
           # Juice Shop") already failed, run_tests never executes and its
           # outcome is "skipped", which must still be classified as an infra
           # failure rather than silently falling through to all_passed.
-          if [ "$RUN_OUTCOME" != "success" ] && [ "$TOTAL" -eq 0 ]; then
+          if { [ "$RUN_OUTCOME" != "success" ] || [ "$PLAYWRIGHT_EXIT_CODE" -ne 0 ]; } && [ "$TOTAL" -eq 0 ]; then
             echo "::error::Playwright failed to run any tests at all — this looks like an infrastructure/config break, not a found bug."
             echo "status=infra_failure" >> "$GITHUB_OUTPUT"
             exit 1
           fi
 
-          if [ "$RUN_OUTCOME" != "success" ]; then
-            echo "::warning::Some tests failed on real assertions (${{ steps.test_summary.outputs.failed }} failed) — tests ran as expected and found a bug in the product."
+          if [ "$PLAYWRIGHT_EXIT_CODE" -ne 0 ] || [ "${{ steps.test_summary.outputs.failed }}" -gt 0 ]; then
+            {
+              echo "### Product defects found"
+              echo
+              echo "Playwright completed normally and found ${{ steps.test_summary.outputs.failed }} failed assertion(s)."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "Some tests failed on real assertions (${{ steps.test_summary.outputs.failed }} failed) — tests ran as expected and found a bug in the product."
             echo "status=bugs_found" >> "$GITHUB_OUTPUT"
           else
             echo "status=all_passed" >> "$GITHUB_OUTPUT"
@@ -363,7 +391,7 @@ jobs:
       - name: Download blob reports
         id: download_blobs
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: blob-report-shard-*
           path: all-blob-reports
@@ -379,7 +407,7 @@ jobs:
       - name: Download Allure results
         if: ${{ inputs.upload-allure }}
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: allure-results-shard-*
           path: allure-results
@@ -644,10 +672,15 @@ jobs:
       - name: Notify in Slack
         id: slack_notify
         if: ${{ always() && steps.slack_message.outputs.message != '' }}
-        uses: slackapi/slack-github-action@v1.27.0
+        uses: slackapi/slack-github-action@v4.0.0
         with:
-          channel-id: ${{ vars.SLACK_CHANNEL_ID }}
-          slack-message: ${{ steps.slack_message.outputs.message }}
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            {
+              "channel": "${{ vars.SLACK_CHANNEL_ID }}",
+              "text": ${{ toJSON(steps.slack_message.outputs.message) }}
+            }
 
       - name: Post analysis as thread reply
         if: ${{ always() && steps.slack_notify.outputs.ts != '' && needs.aggregate.outputs.analysis-message != '' }}
