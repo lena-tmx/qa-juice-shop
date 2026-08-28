@@ -39,7 +39,7 @@ test.describe("Card API", () => {
   );
 
   test(
-    "should not add card without authentication",
+    "should reject adding a payment card without authentication — expects 401",
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PAYMENT, Tags.SCENARIO.NEGATIVE],
     },
@@ -47,10 +47,7 @@ test.describe("Card API", () => {
       const response = await api.card.create("", createTestCard());
       const status = response.status();
 
-      expect(
-        [401, 403].includes(status),
-        `Expected 401 or 403, but got ${status}`,
-      ).toBeTruthy();
+      expect(status, `Expected 401, but got ${status}`).toBe(401);
     },
   );
 });

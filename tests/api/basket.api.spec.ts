@@ -24,7 +24,7 @@ test.describe("Basket API", () => {
   );
 
   test(
-    "should not add item to basket without token",
+    "should reject adding basket item without an auth token — expects 401",
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.BASKET, Tags.SCENARIO.NEGATIVE],
     },
@@ -34,8 +34,9 @@ test.describe("Basket API", () => {
         BasketId: 1,
         quantity: 1,
       });
+      const status = response.status();
 
-      expect([401, 403]).toContain(response.status());
+      expect(status, `Expected 401, but got ${status}`).toBe(401);
     },
   );
 

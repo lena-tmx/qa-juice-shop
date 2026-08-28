@@ -28,7 +28,7 @@ test.describe("Feedback API", () => {
   );
 
   test(
-    "should reject feedback without captcha",
+    "should reject feedback with an incorrect CAPTCHA answer — expects 401",
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.FEEDBACK, Tags.SCENARIO.NEGATIVE],
     },
@@ -43,10 +43,7 @@ test.describe("Feedback API", () => {
       });
       const status = response.status();
 
-      expect(
-        [400, 401, 500].includes(status),
-        `Expected error status, but got ${status}`,
-      ).toBeTruthy();
+      expect(status, `Expected 401, but got ${status}`).toBe(401);
     },
   );
 });
