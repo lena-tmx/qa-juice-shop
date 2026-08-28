@@ -32,7 +32,7 @@ export class LoginPage extends BasePage {
     await expect(this.loginButton).toBeVisible();
   }
 
-  @step("Login with credentials")
+  @step("Log in with credentials")
   async login(email: string, password: string): Promise<void> {
     await this.dismissBlockingBanners();
     await this.emailInput.fill(email);

@@ -1,12 +1,14 @@
 import { APIRequestContext } from "@playwright/test";
 import { ApiClient } from "../clients/ApiClient";
 import { createTestUser, type TestUser } from "@src/data/factories/userFactory";
+import { step } from "@src/utils/step";
 
 export class AuthService extends ApiClient {
   constructor(request: APIRequestContext) {
     super(request);
   }
 
+  @step((user: TestUser) => `Attempt to register user: ${user.email}`)
   async register(user: TestUser) {
     return this.post("/api/Users/", {
       data: {
@@ -21,6 +23,7 @@ export class AuthService extends ApiClient {
     });
   }
 
+  @step((user: TestUser) => `Set up registered user: ${user.email}`)
   async registerOrThrow(user: TestUser): Promise<void> {
     const response = await this.register(user);
 
@@ -32,12 +35,14 @@ export class AuthService extends ApiClient {
     }
   }
 
+  @step((email: string, password: string) => `Log in with credentials: ${email}`)
   async login(email: string, password: string) {
     return this.post("/rest/user/login", {
       data: { email, password },
     });
   }
 
+  @step((email: string, password: string) => `Log in and retrieve session token: ${email}`)
   async loginAndGetAuthData(email: string, password: string) {
     const response = await this.login(email, password);
 
@@ -58,17 +63,20 @@ export class AuthService extends ApiClient {
     };
   }
 
+  @step((user: TestUser) => `Register and log in user: ${user.email}`)
   async registerAndLogin(user: TestUser) {
     await this.registerOrThrow(user);
     return this.loginAndGetAuthData(user.email, user.password);
   }
 
+  @step("Create test user")
   async createTestUser() {
     const user = createTestUser();
     await this.registerOrThrow(user);
     return user;
   }
 
+  @step("Create test user and log in")
   async createAndLoginTestUser() {
     const user = createTestUser();
     const auth = await this.registerAndLogin(user);
@@ -79,12 +87,14 @@ export class AuthService extends ApiClient {
     };
   }
 
+  @step("Retrieve current authenticated user")
   async whoami(token: string) {
     return this.get("/rest/user/whoami", {
       headers: { Authorization: `Bearer ${token}` },
     });
   }
 
+  @step("Change password")
   async changePassword(
     token: string,
     current: string,
@@ -98,6 +108,7 @@ export class AuthService extends ApiClient {
     );
   }
 
+  @step("Retrieve list of security questions")
   async getSecurityQuestions() {
     return this.get("/api/SecurityQuestions");
   }

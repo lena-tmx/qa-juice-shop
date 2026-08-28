@@ -301,6 +301,47 @@ async closeIfVisible(): Promise<void> { ... }
 
 Avoid wrapping every small locator action in a step. Use steps for meaningful business actions.
 
+### Writing the step name itself
+
+Never leave `@step()` empty — an empty decorator falls back to `ClassName.methodName`
+(e.g. `AddressService.getAll`), which is implementation-speak and means nothing to a
+non-technical reader of the Allure report. Always pass a string or a name-builder function.
+
+A step name must read like a line in a business test scenario, not like a code comment or
+an HTTP call description:
+
+- Describe the **business action and its outcome**, not the mechanism. Prefer domain verbs
+  over raw CRUD/HTTP verbs when a more natural one exists: "Add delivery address for
+  recipient: X" instead of "Create address: X"; "Log in with credentials: X" instead of
+  "POST /rest/user/login"; "Retrieve saved payment cards" instead of "Get all".
+- Avoid leaking implementation details into the name: no HTTP verbs/endpoints, no
+  "response"/"payload"/"raw", no method-name fragments like "OrThrow". If a raw/low-level
+  variant of a call must be its own step (e.g. because a higher-level method wraps it),
+  name it so the reader understands it's the underlying mechanism, e.g.
+  "Fetch basket items (raw API response)" — not a near-duplicate of the wrapping step's name.
+- Include whatever identifying detail is the actual subject of *that* action (product name,
+  recipient name, rating, item id) so the step is meaningful **on its own**, since the same
+  method may run standalone in one test and nested inside another business method in
+  another test.
+- Don't restate information an immediately preceding step in the same flow already
+  established, when it adds no new meaning — e.g. once a prior step has named the user
+  being registered, a later unrelated step doesn't need to repeat that same identifier if
+  it has its own distinguishing detail to show instead (recipient name, product, amount).
+  This isn't always avoidable when a method is also called standalone elsewhere — that's an
+  accepted trade-off, not a bug.
+- Give every method a name distinct from its siblings. Two different methods must never
+  render the same step text (e.g. two "Add product to basket: X" steps with no way to tell
+  which implementation ran) — differentiate by what makes them actually different
+  ("...and wait for confirmation").
+
+Good examples: `Register and log in user: alice@example.com`,
+`Add delivery address for recipient: John Doe`, `Submit feedback: 5 star rating`,
+`Search catalog for: apple juice`.
+
+Bad examples (generic/technical, avoid): `AuthService.register`, `Create card: X` (use the
+business verb "Add"), `Get basket items response`, `Login: X` twice for two different
+methods.
+
 ## Language Rules
 
 All code-level text must be in English. This includes:

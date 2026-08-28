@@ -8,14 +8,14 @@ export class AddressService extends ApiClient {
     super(request);
   }
 
-  @step()
+  @step("Retrieve saved delivery addresses")
   async getAll(token: string) {
     return this.get("/api/Addresss/", {
       headers: { Authorization: `Bearer ${token}` },
     });
   }
 
-  @step((token: string, payload: CreateAddressRequest) => `Create address: ${payload.fullName}`)
+  @step((token: string, payload: CreateAddressRequest) => `Add delivery address for recipient: ${payload.fullName}`)
   async create(token: string, payload: CreateAddressRequest) {
     return this.post("/api/Addresss/", {
       headers: {

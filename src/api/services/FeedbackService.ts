@@ -8,7 +8,7 @@ export class FeedbackService extends ApiClient {
     super(request);
   }
 
-  @step()
+  @step("Request CAPTCHA challenge for feedback form")
   async getCaptcha(token: string): Promise<CaptchaResponse> {
     const response = await this.get("/rest/captcha/", {
       headers: { Authorization: `Bearer ${token}` },
@@ -16,7 +16,7 @@ export class FeedbackService extends ApiClient {
     return response.json();
   }
 
-  @step()
+  @step((token: string, payload: CreateFeedbackRequest) => `Submit feedback: ${payload.rating} star rating`)
   async submit(token: string, payload: CreateFeedbackRequest) {
     return this.post("/api/Feedbacks/", {
       headers: {
@@ -27,7 +27,7 @@ export class FeedbackService extends ApiClient {
     });
   }
 
-  @step("Submit feedback with captcha")
+  @step((token: string, comment: string, rating: number) => `Submit feedback with valid CAPTCHA: ${rating} star rating`)
   async submitWithCaptcha(token: string, comment: string, rating: number) {
     const captcha = await this.getCaptcha(token);
     return this.submit(token, {

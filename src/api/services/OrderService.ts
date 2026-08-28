@@ -7,7 +7,7 @@ export class OrderService extends ApiClient {
     super(request);
   }
 
-  @step()
+  @step("Retrieve order history")
   async getHistory(token: string) {
     return this.get("/rest/order-history", {
       headers: { Authorization: `Bearer ${token}` },
