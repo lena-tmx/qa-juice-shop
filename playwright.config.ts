@@ -1,16 +1,16 @@
-import { defineConfig, devices } from '@playwright/test';
-import { env } from './src/utils/env';
+import { defineConfig, devices } from "@playwright/test";
+import { env } from "./src/utils/env";
 
 function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 const tagsFilterPattern = env.tagsFilter.length
-  ? new RegExp(env.tagsFilter.map(escapeRegExp).join('|'))
+  ? new RegExp(env.tagsFilter.map(escapeRegExp).join("|"))
   : undefined;
 
 export default defineConfig({
-  testDir: './tests',
+  testDir: "./tests",
   grep: tagsFilterPattern,
   retries: env.ci ? 2 : 0,
   workers: 2,
@@ -23,26 +23,41 @@ export default defineConfig({
     baseURL: env.baseUrl,
     actionTimeout: 30000,
     headless: true,
-    trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    trace: "on-first-retry",
+    screenshot: "only-on-failure",
+    video: "retain-on-failure",
   },
 
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
     },
     {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
+      name: "firefox",
+      use: { ...devices["Desktop Firefox"] },
     },
   ],
 
   reporter: [
-    ['list'],
-    ['html', { open: 'never' }],
-    ['allure-playwright'],
-    ...(env.ci ? [['json', { outputFile: 'test-report.json' }] as const] : []),
+    ["list"],
+    ["html", { open: "never" }],
+    ["allure-playwright"],
+    ...(env.ci ? [["json", { outputFile: "test-report.json" }] as const] : []),
+    [
+      "playwright-qase-reporter",
+      {
+        mode: "testops",
+        testops: {
+          api: { token: process.env.QASE_API_TOKEN },
+          project: "ZEN",
+          run: {
+            complete: true,
+            title: "Local import run — login suite",
+          },
+          uploadAttachments: true,
+        },
+      },
+    ],
   ],
 });
