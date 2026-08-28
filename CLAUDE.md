@@ -349,13 +349,34 @@ Examples:
 
 Security tests should not only check happy paths.
 
-For expected secure behavior, prefer:
+### Asserting the expected status code
+
+Assert the exact status code the endpoint actually returns, verified by calling it (e.g.
+with `curl`) rather than guessed:
 
 ```ts
-expect(
-  [401, 403].includes(status),
-  `Expected 401 or 403, got ${status}`,
-).toBeTruthy();
+const status = response.status();
+expect(status, `Expected 401, but got ${status}`).toBe(status === 401 ? 401 : status);
+// in practice, once verified:
+expect(status, `Expected 401, but got ${status}`).toBe(401);
+```
+
+Don't default to a multi-value `[401, 403].includes(status)` check "to be safe" — an array of
+"acceptable" codes hides a real regression (e.g. the endpoint silently degrading from 401 to
+200) behind a still-green test, and it hides API inconsistencies a strict assertion would
+surface. Only use the array form when the ambiguity is genuine and confirmed: the same
+logical check legitimately returns different codes in different paths of the same app (verify
+this by testing both paths, don't assume it).
+
+If a verified real response looks wrong (e.g. an endpoint crashes with 500 instead of
+returning 401/403), don't fold that into the "acceptable" list either. Assert the exact code
+you observed and add a comment explaining it's a known backend issue, e.g.:
+
+```ts
+// Backend bug: unauthenticated /rest/order-history crashes with 500 instead
+// of returning 401. Verified stable across repeated requests. Documents the
+// current (incorrect) behavior until the backend is fixed.
+expect(status, `Expected 500, but got ${status}`).toBe(500);
 ```
 
 ## UI Stability Rules
@@ -457,11 +478,12 @@ page.locator("mat-row").filter({
 For security and API tests, always include a descriptive error message in assertions:
 
 ```ts
-expect(
-  [401, 403].includes(status),
-  `Expected 401 or 403, but got ${status}`,
-).toBeTruthy();
+const status = response.status();
+expect(status, `Expected 401, but got ${status}`).toBe(401);
 ```
+
+See "Asserting the expected status code" under Security Testing Rules for why this should be
+the exact verified code, not a list of "acceptable" ones.
 
 For UI tests, Playwright's built-in assertion messages are usually sufficient.
 
