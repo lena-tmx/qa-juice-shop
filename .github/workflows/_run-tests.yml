@@ -83,6 +83,7 @@ jobs:
       failed: ${{ steps.test_summary.outputs.failed }}
       skipped: ${{ steps.test_summary.outputs.skipped }}
       flaky: ${{ steps.test_summary.outputs.flaky }}
+      run-status: ${{ steps.evaluate_run.outputs.status }}
       playwright-artifact-url: ${{ steps.playwright_report.outputs.artifact-url }}
       allure-artifact-url: ${{ steps.allure_report.outputs.artifact-url }}
       analysis-message: ${{ steps.analyze.outputs.analysis-message }}
@@ -153,15 +154,6 @@ jobs:
           echo "Running command: $CMD"
           eval "$CMD" | tee test-results.txt
 
-      - name: Note test status
-        if: always()
-        run: |
-          if [ "${{ steps.run_tests.outcome }}" = "failure" ]; then
-            echo "⚠️ Test failures are allowed for this workflow and will not fail the job."
-          else
-            echo "✅ Tests completed without step-level failure."
-          fi
-
       - name: Collect test summary
         if: always()
         id: test_summary
@@ -183,6 +175,26 @@ jobs:
           echo "failed=$(extract_total failed)" >> "$GITHUB_OUTPUT"
           echo "skipped=$(extract_total skipped)" >> "$GITHUB_OUTPUT"
           echo "flaky=$(extract_total flaky)" >> "$GITHUB_OUTPUT"
+
+      - name: Determine real failure vs found bug
+        if: always()
+        id: evaluate_run
+        shell: bash
+        run: |
+          TOTAL=$(( ${{ steps.test_summary.outputs.passed }} + ${{ steps.test_summary.outputs.failed }} + ${{ steps.test_summary.outputs.skipped }} + ${{ steps.test_summary.outputs.flaky }} ))
+
+          if [ "${{ steps.run_tests.outcome }}" = "failure" ] && [ "$TOTAL" -eq 0 ]; then
+            echo "::error::Playwright не смог запустить тесты вообще — похоже на поломку инфраструктуры/конфига, а не на находку бага."
+            echo "status=infra_failure" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+          if [ "${{ steps.run_tests.outcome }}" = "failure" ]; then
+            echo "::warning::Часть тестов упала на реальных ассертах (${{ steps.test_summary.outputs.failed }} failed) — найден баг в продукте."
+            echo "status=bugs_found" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=all_passed" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Show report folders
         if: always()
@@ -422,9 +434,19 @@ jobs:
         id: slack_message
         shell: bash
         run: |
+          RUN_STATUS="${{ needs.test.outputs.run-status }}"
+
+          if [ "$RUN_STATUS" = "infra_failure" ]; then
+            HEADER=":rotating_light: *${{ inputs.workflow-name }}* — CI СЛОМАН на \`${{ github.ref_name }}\` (тесты не смогли запуститься)"
+          elif [ "$RUN_STATUS" = "bugs_found" ]; then
+            HEADER=":bug: *${{ inputs.workflow-name }}* завершён для \`${{ github.ref_name }}\` — найдены баги в продукте"
+          else
+            HEADER=":white_check_mark: *${{ inputs.workflow-name }}* завершён для \`${{ github.ref_name }}\` — все тесты прошли"
+          fi
+
           {
             echo 'message<<EOF'
-            echo "*${{ inputs.workflow-name }}* finished for \`${{ github.ref_name }}\`"
+            echo "$HEADER"
             echo ""
             echo ":white_check_mark: Passed: ${{ needs.test.outputs.passed }}"
             echo ":x: Failed: ${{ needs.test.outputs.failed }}"
