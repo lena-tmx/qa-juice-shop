@@ -1,5 +1,4 @@
-import { APIRequestContext, APIResponse } from "@playwright/test";
-import { attachment, ContentType } from "allure-js-commons";
+import { APIRequestContext, APIResponse, test } from "@playwright/test";
 import { env } from "@src/utils/env";
 
 type RequestOptions = {
@@ -37,7 +36,19 @@ export class ApiClient {
     if (options?.data !== undefined) {
       curlParts.push(`-d ${shellQuote(JSON.stringify(options.data))}`);
     }
-    await attachment("Request", curlParts.join(" \\\n  "), ContentType.TEXT);
+
+    // Use Playwright's native attachment API (not allure-js-commons) so every
+    // configured reporter — Allure, Qase, HTML — picks these up and nests
+    // them under the currently active step. The endpoint is baked into the
+    // attachment name itself so it stays identifiable even in a report view
+    // that lists attachments flat instead of nested under their step.
+    const label = `${method} ${url}`;
+    const testInfo = test.info();
+
+    await testInfo.attach(`Request: ${label}`, {
+      body: curlParts.join(" \\\n  "),
+      contentType: "text/plain",
+    });
 
     const status = response.status();
     let body: string;
@@ -46,11 +57,10 @@ export class ApiClient {
     } catch {
       body = await response.text();
     }
-    await attachment(
-      "Response",
-      `Status: ${status}\n\n${body}`,
-      ContentType.TEXT,
-    );
+    await testInfo.attach(`Response: ${label} -> ${status}`, {
+      body: `Status: ${status}\n\n${body}`,
+      contentType: "text/plain",
+    });
   }
 
   protected async get(
