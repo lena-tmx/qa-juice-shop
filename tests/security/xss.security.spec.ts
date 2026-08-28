@@ -1,9 +1,10 @@
+import { qase } from 'playwright-qase-reporter';
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 
 test.describe("Input Validation", () => {
   test(
-    "should not reflect raw script payload in products search API response",
+    qase(39, "should not reflect raw script payload in products search API response"),
     {
       tag: [
         Tags.TEST_TYPE.SECURITY,
@@ -32,7 +33,7 @@ test.describe("Input Validation", () => {
   );
 
   test(
-    "should not execute script payload in UI search",
+    qase(95, "should not execute script payload in UI search"),
     {
       tag: [
         Tags.TEST_TYPE.SECURITY,

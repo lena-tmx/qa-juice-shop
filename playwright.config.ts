@@ -11,8 +11,9 @@ const tagsFilterPattern = env.tagsFilter.length
 
 export default defineConfig({
   testDir: "./tests",
+  fullyParallel: true,
   grep: tagsFilterPattern,
-  retries: env.ci ? 2 : 0,
+  retries: 0,
   workers: 2,
   timeout: 120000,
   expect: {
@@ -43,17 +44,36 @@ export default defineConfig({
     ["list"],
     ["html", { open: "never" }],
     ["allure-playwright"],
+    ...(env.ci
+      ? [
+          [
+            "blob",
+            {
+              outputDir:
+                process.env.PLAYWRIGHT_BLOB_OUTPUT_DIR ?? "blob-report",
+            },
+          ] as const,
+        ]
+      : []),
     ...(env.ci ? [["json", { outputFile: "test-report.json" }] as const] : []),
     [
       "playwright-qase-reporter",
       {
-        mode: "testops",
+        mode: process.env.QASE_MODE ?? "off",
         testops: {
-          api: { token: process.env.QASE_API_TOKEN },
-          project: "ZEN",
+          api: {
+            token:
+              process.env.QASE_TESTOPS_API_TOKEN ?? process.env.QASE_API_TOKEN,
+          },
+          project: process.env.QASE_TESTOPS_PROJECT ?? "ZEN",
           run: {
-            complete: true,
-            title: "Local import run — login suite",
+            id: process.env.QASE_TESTOPS_RUN_ID
+              ? Number(process.env.QASE_TESTOPS_RUN_ID)
+              : undefined,
+            complete: process.env.QASE_TESTOPS_RUN_COMPLETE !== "false",
+            title:
+              process.env.QASE_TESTOPS_RUN_TITLE ??
+              "Local Playwright test run",
           },
           uploadAttachments: true,
         },

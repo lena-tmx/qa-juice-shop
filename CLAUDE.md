@@ -593,13 +593,12 @@ reports/crawler/
 
 ## Current Development Priorities
 
-1. Clean up dead code (example.spec.ts, commented-out AuthApi.ts, old.playwright.config.ts)
-2. Fix typo: `BasketSrvice.ts` -> `BasketService.ts`
-3. Fill empty `auth.security.spec.ts` with authentication security tests
-4. Expand security test coverage (SQL injection, broken auth, security headers)
-5. Add missing Page Objects (RegistrationPage, ProductDetailPage)
-6. Add crawler agent
-7. Generate crawler reports
-8. Later: analyzer agent
-9. Later: generator agent
-10. Later: validator agent
+1. Fix typo: `BasketSrvice.ts` -> `BasketService.ts`
+2. Fill empty `auth.security.spec.ts` with authentication security tests
+3. Expand security test coverage (SQL injection, broken auth, security headers)
+4. Add missing Page Objects (RegistrationPage, ProductDetailPage)
+5. Add crawler agent
+6. Generate crawler reports
+7. Later: analyzer agent
+8. Later: generator agent
+9. Later: validator agent

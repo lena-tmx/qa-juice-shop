@@ -1,9 +1,10 @@
+import { qase } from 'playwright-qase-reporter';
 import { test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 
 test.describe(`Search UI`, () => {
   test(
-    `should search for a product`,
+    qase(86, `should search for a product`),
     { tag: [Tags.TEST_TYPE.UI, Tags.FEATURE.SEARCH] },
     async ({ pages }) => {
       await pages.homePage.open();
@@ -14,7 +15,7 @@ test.describe(`Search UI`, () => {
   );
 
   test(
-    `should display no results found`,
+    qase(87, `should display no results found`),
     { tag: [Tags.TEST_TYPE.UI, Tags.FEATURE.SEARCH] },
     async ({ pages }) => {
       await pages.homePage.open();

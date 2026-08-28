@@ -45,13 +45,15 @@ export class ApiClient {
       curlParts.push(`-d ${shellQuote(JSON.stringify(options.data))}`);
     }
 
-    // Use Playwright's native attachment API (not allure-js-commons) so every
-    // configured reporter — Allure, Qase, HTML — picks these up and nests
-    // them under the currently active step. The endpoint is baked into the
-    // attachment name itself so it stays identifiable even in a report view
-    // that lists attachments flat instead of nested under their step. Avoid
-    // slashes in the name because Qase treats them as path separators and
-    // otherwise reduces labels such as "/api/Users/" to just "Users".
+    /**
+     * Use Playwright's native attachment API (not allure-js-commons) so every
+     * configured reporter — Allure, Qase, HTML — picks these up and nests
+     * them under the currently active step. The endpoint is baked into the
+     * attachment name itself so it stays identifiable even in a report view
+     * that lists attachments flat instead of nested under their step. Avoid
+     * slashes in the name because Qase treats them as path separators and
+     * otherwise reduces labels such as "/api/Users/" to just "Users".
+     */
     const label = `${method} ${attachmentEndpoint(url)}`;
     const testInfo = test.info();
 

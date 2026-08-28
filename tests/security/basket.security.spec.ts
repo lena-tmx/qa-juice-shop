@@ -1,10 +1,14 @@
+import { qase } from "playwright-qase-reporter";
 import { expect, test } from "../fixtures";
 import { createTestUser } from "@src/data/factories/userFactory";
 import { Tags } from "../attributes/tags";
 
 test.describe("Broken Access Control", () => {
   test(
-    "should not allow accessing arbitrary basket by id without auth (IDOR)",
+    qase(
+      36,
+      "should not allow accessing arbitrary basket by id without auth (IDOR)",
+    ),
     {
       tag: [
         Tags.TEST_TYPE.SECURITY,
@@ -45,16 +49,21 @@ test.describe("Broken Access Control", () => {
       const response = await api.basket.getBasket(auth1.basketId, auth2.token);
 
       const status = response.status();
-      // Expected (secure) behavior: 401, matching this app's own pattern for
-      // unauthorized basket access (see sibling test above). The app is
-      // currently vulnerable and returns 200 here — that's the bug this
-      // test exists to catch, not a flaky assertion.
+      /**
+       * Expected (secure) behavior: 401, matching this app's own pattern for
+       * unauthorized basket access (see sibling test above). The app is
+       * currently vulnerable and returns 200 here — that's the bug this
+       * test exists to catch, not a flaky assertion.
+       */
       expect(status, `Expected 401, but got ${status}`).toBe(401);
     },
   );
 
   test(
-    "should not allow one user to add item into another user's basket",
+    qase(
+      41,
+      "should not allow one user to add item into another user's basket",
+    ),
     {
       tag: [
         Tags.TEST_TYPE.SECURITY,

@@ -75,24 +75,57 @@ on:
         type: boolean
 
 jobs:
+  prepare_qase:
+    name: Prepare Qase Run
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      enabled: ${{ steps.qase.outputs.enabled }}
+      run-id: ${{ steps.qase.outputs.run-id }}
+      run-url: ${{ steps.qase.outputs.run-url }}
+    steps:
+      - name: Create shared Qase run
+        id: qase
+        continue-on-error: true
+        env:
+          QASE_ENABLED: ${{ inputs.upload-qase && secrets.QASE_API_TOKEN != '' }}
+          QASE_API_TOKEN: ${{ secrets.QASE_API_TOKEN }}
+          QASE_PROJECT: ZEN
+          QASE_RUN_TITLE: "CI run #${{ github.run_number }} — ${{ github.head_ref || github.ref_name }} (${{ inputs.suite }}/${{ inputs.project }})"
+        shell: bash
+        run: |
+          echo "enabled=false" >> "$GITHUB_OUTPUT"
+
+          if [ "$QASE_ENABLED" != "true" ]; then
+            echo "Qase reporting is disabled"
+            exit 0
+          fi
+
+          RESPONSE=$(curl --fail-with-body --silent --show-error \
+            -X POST "https://api.qase.io/v1/run/${QASE_PROJECT}" \
+            -H "Token: ${QASE_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data "$(jq -n --arg title "$QASE_RUN_TITLE" '{title: $title, is_autotest: true, cases: []}')")
+          RUN_ID=$(jq -er '.result.id' <<< "$RESPONSE")
+
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
+          echo "run-id=$RUN_ID" >> "$GITHUB_OUTPUT"
+          echo "run-url=https://app.qase.io/run/${QASE_PROJECT}/dashboard/${RUN_ID}" >> "$GITHUB_OUTPUT"
+
   test:
-    name: ${{ inputs.workflow-name }}
+    name: ${{ inputs.workflow-name }} (shard ${{ matrix.shard }}/2)
+    needs: prepare_qase
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     timeout-minutes: ${{ inputs.timeout-minutes }}
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.58.2-noble
     permissions:
       contents: read
-    outputs:
-      passed: ${{ steps.test_summary.outputs.passed }}
-      failed: ${{ steps.test_summary.outputs.failed }}
-      skipped: ${{ steps.test_summary.outputs.skipped }}
-      flaky: ${{ steps.test_summary.outputs.flaky }}
-      run-status: ${{ steps.evaluate_run.outputs.status }}
-      playwright-artifact-url: ${{ steps.playwright_report.outputs.artifact-url }}
-      allure-artifact-url: ${{ steps.allure_report.outputs.artifact-url }}
-      analysis-message: ${{ steps.analyze.outputs.analysis-message }}
-
     services:
       juice-shop:
         image: bkimminich/juice-shop
@@ -105,11 +138,12 @@ jobs:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
       SLACK_CHANNEL_ID: ${{ vars.SLACK_CHANNEL_ID }}
       SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-      QASE_MODE: ${{ (inputs.upload-qase && secrets.QASE_API_TOKEN != '') && 'testops' || 'off' }}
+      QASE_MODE: ${{ needs.prepare_qase.outputs.enabled == 'true' && 'testops' || 'off' }}
       QASE_TESTOPS_PROJECT: "ZEN"
       QASE_TESTOPS_API_TOKEN: ${{ secrets.QASE_API_TOKEN }}
+      QASE_TESTOPS_RUN_ID: ${{ needs.prepare_qase.outputs.run-id }}
       QASE_TESTOPS_RUN_TITLE: "CI run #${{ github.run_number }} — ${{ github.head_ref || github.ref_name }} (${{ inputs.suite }}/${{ inputs.project }})"
-      QASE_TESTOPS_RUN_COMPLETE: "true"
+      QASE_TESTOPS_RUN_COMPLETE: "false"
 
     steps:
       - name: Checkout
@@ -128,6 +162,10 @@ jobs:
         id: run_tests
         continue-on-error: true
         shell: bash
+        env:
+          SUITE: ${{ inputs.suite }}
+          PROJECT: ${{ inputs.project }}
+          GREP: ${{ inputs.grep }}
         run: |
           set -o pipefail
 
@@ -135,38 +173,37 @@ jobs:
             echo "Qase reporting enabled"
           fi
 
-          SUITE="${{ inputs.suite }}"
-          PROJECT="${{ inputs.project }}"
-          GREP="${{ inputs.grep }}"
+          CMD=(npx playwright test)
 
-          CMD="npx playwright test"
-
-          if [ "$SUITE" = "ui" ]; then
-            CMD="$CMD tests/ui"
-          elif [ "$SUITE" = "api" ]; then
-            CMD="$CMD tests/api"
-          elif [ "$SUITE" = "security" ]; then
-            CMD="$CMD tests/security"
-          elif [ "$SUITE" = "smoke" ]; then
-            CMD="$CMD --grep @smoke"
-          elif [ "$SUITE" = "auth" ]; then
-            CMD="$CMD --grep @auth"
-          elif [ "$SUITE" = "search" ]; then
-            CMD="$CMD --grep @search"
-          elif [ "$SUITE" = "basket" ]; then
-            CMD="$CMD --grep @basket"
-          fi
+          case "$SUITE" in
+            ui) CMD+=(tests/ui) ;;
+            api) CMD+=(tests/api) ;;
+            security) CMD+=(tests/security) ;;
+            smoke) CMD+=(--grep @smoke) ;;
+            auth) CMD+=(--grep @auth) ;;
+            search) CMD+=(--grep @search) ;;
+            basket) CMD+=(--grep @basket) ;;
+            all) ;;
+            *) echo "::error::Unknown suite: $SUITE"; exit 1 ;;
+          esac
 
           if [ "$PROJECT" != "all" ]; then
-            CMD="$CMD --project=$PROJECT"
+            case "$PROJECT" in
+              chromium|firefox|webkit) CMD+=(--project="$PROJECT") ;;
+              *) echo "::error::Unknown project: $PROJECT"; exit 1 ;;
+            esac
           fi
 
           if [ -n "$GREP" ]; then
-            CMD="$CMD --grep \"$GREP\""
+            CMD+=(--grep "$GREP")
           fi
 
-          echo "Running command: $CMD"
-          eval "$CMD" | tee test-results.txt
+          CMD+=(--shard=${{ matrix.shard }}/2 --pass-with-no-tests)
+
+          printf 'Running command:'
+          printf ' %q' "${CMD[@]}"
+          echo
+          "${CMD[@]}" | tee test-results.txt
 
       - name: Collect test summary
         if: always()
@@ -243,27 +280,154 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           if-no-files-found: ignore
-          name: test-results
+          name: test-results-shard-${{ matrix.shard }}
           path: test-results.txt
           retention-days: 7
 
-      - name: Install Java for Allure
+      - name: Upload blob report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          if-no-files-found: error
+          name: blob-report-shard-${{ matrix.shard }}
+          path: blob-report/
+          retention-days: 30
+
+      - name: Upload JSON report
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          if-no-files-found: error
+          name: json-report-shard-${{ matrix.shard }}
+          path: test-report.json
+          retention-days: 30
+
+      - name: Upload Allure results
         if: ${{ always() && inputs.upload-allure }}
+        uses: actions/upload-artifact@v6
+        with:
+          if-no-files-found: ignore
+          name: allure-results-shard-${{ matrix.shard }}
+          path: allure-results/
+          retention-days: 30
+
+  complete_qase:
+    name: Complete Qase Run
+    if: ${{ always() && needs.prepare_qase.outputs.enabled == 'true' }}
+    needs:
+      - prepare_qase
+      - test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Complete shared Qase run
+        env:
+          QASE_API_TOKEN: ${{ secrets.QASE_API_TOKEN }}
+          QASE_PROJECT: ZEN
+          QASE_RUN_ID: ${{ needs.prepare_qase.outputs.run-id }}
         run: |
-          apt-get update -qq && apt-get install -y -qq default-jre-headless > /dev/null
+          curl --fail-with-body --silent --show-error \
+            -X POST "https://api.qase.io/v1/run/${QASE_PROJECT}/${QASE_RUN_ID}/complete" \
+            -H "Token: ${QASE_API_TOKEN}"
+
+  aggregate:
+    name: Merge Shard Reports
+    if: always()
+    needs:
+      - prepare_qase
+      - test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+    outputs:
+      passed: ${{ steps.summary.outputs.passed }}
+      failed: ${{ steps.summary.outputs.failed }}
+      skipped: ${{ steps.summary.outputs.skipped }}
+      flaky: ${{ steps.summary.outputs.flaky }}
+      run-status: ${{ steps.summary.outputs.run-status }}
+      playwright-artifact-url: ${{ steps.playwright_report.outputs.artifact-url }}
+      allure-artifact-url: ${{ steps.allure_report.outputs.artifact-url }}
+      analysis-message: ${{ steps.analyze.outputs.analysis-message }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+
+      - name: Download blob reports
+        id: download_blobs
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          pattern: blob-report-shard-*
+          path: all-blob-reports
+          merge-multiple: true
+
+      - name: Merge Playwright reports
+        id: merge_reports
+        continue-on-error: true
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_FILE: test-report.json
+        run: npx playwright merge-reports --reporter=html,json all-blob-reports
+
+      - name: Download Allure results
+        if: ${{ inputs.upload-allure }}
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          pattern: allure-results-shard-*
+          path: allure-results
+          merge-multiple: true
 
       - name: Generate Allure report
-        if: ${{ always() && inputs.upload-allure }}
+        if: ${{ inputs.upload-allure }}
         run: |
+          apt-get update -qq && apt-get install -y -qq default-jre-headless > /dev/null
           if [ -d "allure-results" ] && [ "$(ls -A allure-results 2>/dev/null)" ]; then
-            echo "Generating Allure report from allure-results"
-            ls -la allure-results || true
             npx allure generate allure-results --clean -o allure-report
-            echo "Generated allure-report contents:"
-            ls -la allure-report || true
-          else
-            echo "No allure-results found, skipping Allure generation"
           fi
+
+      - name: Collect merged test summary
+        if: always()
+        id: summary
+        env:
+          SHARD_JOB_RESULT: ${{ needs.test.result }}
+          MERGE_RESULT: ${{ steps.merge_reports.outcome }}
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+          let stats = {};
+          if (fs.existsSync("test-report.json")) {
+            try {
+              stats = JSON.parse(fs.readFileSync("test-report.json", "utf8")).stats ?? {};
+            } catch (error) {
+              console.warn(`Could not parse merged test-report.json: ${error.message}`);
+            }
+          }
+          const counts = {
+            passed: stats.expected ?? 0,
+            failed: stats.unexpected ?? 0,
+            skipped: stats.skipped ?? 0,
+            flaky: stats.flaky ?? 0,
+          };
+          const total = Object.values(counts).reduce((sum, value) => sum + value, 0);
+          const status = process.env.SHARD_JOB_RESULT !== "success" || process.env.MERGE_RESULT !== "success" || total === 0
+            ? "infra_failure"
+            : counts.failed > 0
+              ? "bugs_found"
+              : "all_passed";
+          const output = { ...counts, "run-status": status };
+          fs.appendFileSync(
+            process.env.GITHUB_OUTPUT,
+            Object.entries(output).map(([key, value]) => `${key}=${value}`).join("\n") + "\n",
+          );
+          NODE
 
       - name: Upload Playwright report
         if: always()
@@ -274,54 +438,6 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
-
-      - name: Prepare published report
-        if: ${{ always() && inputs.publish-pages-report }}
-        shell: bash
-        run: |
-          REPORT_PATH="${{ inputs.pages-report-path }}"
-          rm -rf published-report
-          mkdir -p published-report
-
-          if [ -d "$REPORT_PATH" ] && [ "$(ls -A "$REPORT_PATH" 2>/dev/null)" ]; then
-            cp -R "$REPORT_PATH"/. published-report/
-            echo "Prepared published-report from $REPORT_PATH"
-          elif [ -d "playwright-report" ] && [ "$(ls -A playwright-report 2>/dev/null)" ]; then
-            cp -R playwright-report/. published-report/
-            echo "Requested report directory $REPORT_PATH is missing, published playwright-report instead"
-          else
-            cat > published-report/index.html <<EOF
-          <!doctype html>
-          <html lang="en">
-            <head>
-              <meta charset="utf-8" />
-              <title>${{ inputs.pages-report-name }}</title>
-            </head>
-            <body>
-              <h1>${{ inputs.pages-report-name }} is unavailable</h1>
-              <p>The expected report directory <code>$REPORT_PATH</code> was not generated for this run.</p>
-              <p><a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">Open GitHub Actions run</a></p>
-            </body>
-          </html>
-          EOF
-            echo "Prepared fallback published-report page because $REPORT_PATH is missing"
-          fi
-
-          # Bundle additional reports as subdirectories so each has a stable URL
-          if [ -d "playwright-report" ] && [ "$(ls -A playwright-report 2>/dev/null)" ]; then
-            cp -R playwright-report/. published-report/playwright-report/
-            echo "Bundled playwright-report/"
-          fi
-          if [ -d "allure-report" ] && [ "$(ls -A allure-report 2>/dev/null)" ]; then
-            cp -R allure-report/. published-report/allure-report/
-            echo "Bundled allure-report/"
-          fi
-
-      - name: Upload Pages artifact
-        if: ${{ always() && inputs.publish-pages-report }}
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: published-report
 
       - name: Upload Allure results
         if: ${{ always() && inputs.upload-allure }}
@@ -342,38 +458,53 @@ jobs:
           path: allure-report/
           retention-days: 30
 
+      - name: Prepare published report
+        if: ${{ always() && inputs.publish-pages-report }}
+        env:
+          REPORT_PATH: ${{ inputs.pages-report-path }}
+          REPORT_NAME: ${{ inputs.pages-report-name }}
+        run: |
+          mkdir -p published-report
+          if [ -d "$REPORT_PATH" ] && [ "$(ls -A "$REPORT_PATH" 2>/dev/null)" ]; then
+            cp -R "$REPORT_PATH"/. published-report/
+          elif [ -d "playwright-report" ]; then
+            cp -R playwright-report/. published-report/
+          fi
+          if [ -d "playwright-report" ]; then
+            mkdir -p published-report/playwright-report
+            cp -R playwright-report/. published-report/playwright-report/
+          fi
+          if [ -d "allure-report" ]; then
+            mkdir -p published-report/allure-report
+            cp -R allure-report/. published-report/allure-report/
+          fi
+
+      - name: Upload Pages artifact
+        if: ${{ always() && inputs.publish-pages-report }}
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: published-report
+
       - name: Attach report links to workflow summary
         if: always()
         run: |
           echo "[GitHub Actions Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> "$GITHUB_STEP_SUMMARY"
-          if [ "${{ inputs.upload-qase }}" = "true" ] && [ -n "$QASE_TESTOPS_API_TOKEN" ]; then
-            echo "Qase run uploaded — check the project dashboard: https://app.qase.io/run/ZEN/dashboard" >> "$GITHUB_STEP_SUMMARY"
-          fi
-          if [ "${{ inputs.publish-pages-report }}" = "true" ]; then
-            echo "Published report links will appear after the Pages deployment job finishes." >> "$GITHUB_STEP_SUMMARY"
-          fi
-          if [ -n "${{ steps.playwright_report.outputs.artifact-url }}" ]; then
-            echo "[Download Playwright report artifact](${{ steps.playwright_report.outputs.artifact-url }})" >> "$GITHUB_STEP_SUMMARY"
-          fi
-          if [ -n "${{ steps.allure_report.outputs.artifact-url }}" ]; then
-            echo "[Download Allure report artifact](${{ steps.allure_report.outputs.artifact-url }})" >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "${{ needs.prepare_qase.outputs.run-url }}" ]; then
+            echo "[Open Qase run](${{ needs.prepare_qase.outputs.run-url }})" >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Analyze test results
         if: ${{ always() && inputs.notify-slack }}
         id: analyze
-        shell: bash
         run: |
           if [ -f test-report.json ]; then
             npx tsx src/agents/analyzer/analyzeResults.ts test-report.json analysis-message.txt
           else
             echo ":mag: *Test Analysis*" > analysis-message.txt
             echo "" >> analysis-message.txt
-            echo "No test results JSON found." >> analysis-message.txt
+            echo "Merged test report is unavailable." >> analysis-message.txt
           fi
-
           npx tsx src/agents/coverage/collectCoverage.ts --slack "" coverage-message.txt
-
           {
             echo 'analysis-message<<EOF'
             cat analysis-message.txt
@@ -385,7 +516,7 @@ jobs:
   deploy_report:
     name: Deploy Published Report
     if: ${{ always() && inputs.publish-pages-report && github.event_name != 'pull_request' }}
-    needs: test
+    needs: aggregate
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -418,8 +549,10 @@ jobs:
     name: Notify Slack
     if: ${{ always() && inputs.notify-slack }}
     needs:
-      - test
+      - aggregate
+      - complete_qase
       - deploy_report
+      - prepare_qase
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -470,9 +603,9 @@ jobs:
           QASE_TESTOPS_API_TOKEN: ${{ secrets.QASE_API_TOKEN }}
         shell: bash
         run: |
-          RUN_STATUS="${{ needs.test.outputs.run-status }}"
+          RUN_STATUS="${{ needs.aggregate.outputs.run-status }}"
 
-          if [ "$RUN_STATUS" = "infra_failure" ]; then
+          if [ "$RUN_STATUS" = "infra_failure" ] || [ -z "$RUN_STATUS" ]; then
             HEADER=":rotating_light: *${{ inputs.workflow-name }}* — CI IS BROKEN on \`${DISPLAY_REF}\` (tests failed to run)"
           elif [ "$RUN_STATUS" = "bugs_found" ]; then
             HEADER=":bug: *${{ inputs.workflow-name }}* finished for \`${DISPLAY_REF}\` — bugs found in the product"
@@ -484,10 +617,10 @@ jobs:
             echo 'message<<EOF'
             echo "$HEADER"
             echo ""
-            echo ":white_check_mark: Passed: ${{ needs.test.outputs.passed }}"
-            echo ":x: Failed: ${{ needs.test.outputs.failed }}"
-            echo ":white_circle: Skipped: ${{ needs.test.outputs.skipped }}"
-            echo ":large_blue_circle: Flaky: ${{ needs.test.outputs.flaky }}"
+            echo ":white_check_mark: Passed: ${{ needs.aggregate.outputs.passed }}"
+            echo ":x: Failed: ${{ needs.aggregate.outputs.failed }}"
+            echo ":white_circle: Skipped: ${{ needs.aggregate.outputs.skipped }}"
+            echo ":large_blue_circle: Flaky: ${{ needs.aggregate.outputs.flaky }}"
             echo ""
             echo "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Open GitHub Actions run>"
             PAGE_URL="${{ needs.deploy_report.outputs.page-url }}"
@@ -502,8 +635,8 @@ jobs:
                 echo "<${PAGE_URL}allure-report/|:bar_chart: Open Allure report>"
               fi
             fi
-            if [ "${{ inputs.upload-qase }}" = "true" ] && [ -n "$QASE_TESTOPS_API_TOKEN" ]; then
-              echo "<https://app.qase.io/run/ZEN/dashboard|:bar_chart: Open Qase run>"
+            if [ -n "${{ needs.prepare_qase.outputs.run-url }}" ]; then
+              echo "<${{ needs.prepare_qase.outputs.run-url }}|:bar_chart: Open Qase run>"
             fi
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
@@ -517,13 +650,13 @@ jobs:
           slack-message: ${{ steps.slack_message.outputs.message }}
 
       - name: Post analysis as thread reply
-        if: ${{ always() && steps.slack_notify.outputs.ts != '' && needs.test.outputs.analysis-message != '' }}
+        if: ${{ always() && steps.slack_notify.outputs.ts != '' && needs.aggregate.outputs.analysis-message != '' }}
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         shell: bash
         run: |
           ANALYSIS_TEXT=$(cat <<'ANALYSIS_EOF'
-          ${{ needs.test.outputs.analysis-message }}
+          ${{ needs.aggregate.outputs.analysis-message }}
           ANALYSIS_EOF
           )
 
