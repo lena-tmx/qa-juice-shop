@@ -1,0 +1,10 @@
+.claude/
+.playwright-mcp/
+*.md
+allure-report/
+allure-results/
+blob-report/
+node_modules/
+playwright-report/
+published-report/
+test-results/

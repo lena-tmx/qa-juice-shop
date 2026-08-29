@@ -75,8 +75,32 @@ on:
         type: boolean
 
 jobs:
+  validate:
+    name: Validate test project
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+
+      - name: Validate TypeScript and formatting
+        run: npm run validate
+
   prepare_qase:
     name: Prepare Qase Run
+    needs: validate
     runs-on: ubuntu-latest
     permissions:
       contents: read

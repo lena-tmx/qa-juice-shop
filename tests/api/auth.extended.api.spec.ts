@@ -1,7 +1,12 @@
-import { qase } from 'playwright-qase-reporter';
+import { qase } from "playwright-qase-reporter";
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 import { createTestUser } from "@src/data/factories/userFactory";
+import {
+  securityQuestionsResponseSchema,
+  userResponseSchema,
+} from "@src/api/schemas/api.schemas";
+import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Auth Extended API", () => {
   test(
@@ -13,7 +18,10 @@ test.describe("Auth Extended API", () => {
       const response = await api.auth.getSecurityQuestions();
 
       expect(response.status()).toBe(200);
-      const body = await response.json();
+      const body = await parseApiResponse(
+        response,
+        securityQuestionsResponseSchema,
+      );
       expect(body.data.length).toBeGreaterThan(0);
       expect(body.data[0].question).toBeTruthy();
     },
@@ -33,13 +41,16 @@ test.describe("Auth Extended API", () => {
       const response = await api.auth.register(user);
 
       expect([200, 201]).toContain(response.status());
-      const body = await response.json();
+      const body = await parseApiResponse(response, userResponseSchema);
       expect(body.data.email).toBe(user.email);
     },
   );
 
   test(
-    qase(68, "should reject registration with an already-used email — expects 400"),
+    qase(
+      68,
+      "should reject registration with an already-used email — expects 400",
+    ),
     {
       tag: [
         Tags.TEST_TYPE.API,
@@ -78,7 +89,10 @@ test.describe("Auth Extended API", () => {
   );
 
   test(
-    qase(72, "should reject password change with wrong current password — expects 401"),
+    qase(
+      72,
+      "should reject password change with wrong current password — expects 401",
+    ),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.AUTH, Tags.SCENARIO.NEGATIVE],
     },

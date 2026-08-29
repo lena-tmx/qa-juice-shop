@@ -24,7 +24,7 @@ export default defineConfig({
     baseURL: env.baseUrl,
     actionTimeout: 30000,
     headless: true,
-    trace: "on-first-retry",
+    trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
   },
@@ -72,8 +72,7 @@ export default defineConfig({
               : undefined,
             complete: process.env.QASE_TESTOPS_RUN_COMPLETE !== "false",
             title:
-              process.env.QASE_TESTOPS_RUN_TITLE ??
-              "Local Playwright test run",
+              process.env.QASE_TESTOPS_RUN_TITLE ?? "Local Playwright test run",
           },
           uploadAttachments: true,
         },

@@ -27,16 +27,22 @@
     "coverage": "tsx src/agents/coverage/collectCoverage.ts",
     "coverage:har": "tsx src/agents/coverage/collectCoverage.ts test-results/har.json",
     "coverage:slack": "tsx src/agents/coverage/collectCoverage.ts --slack",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "validate": "npm run typecheck && npm run lint && npm run format:check",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down -v"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/LenaChe-1234/qa-juice-shop.git"
+    "url": "git+https://github.com/lena-tmx/qa-juice-shop.git"
   },
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@faker-js/faker": "^10.5.0",
     "@playwright/mcp": "^0.0.76",
     "@playwright/test": "^1.58.2",
@@ -44,9 +50,16 @@
     "allure-commandline": "^2.38.1",
     "allure-playwright": "^3.6.0",
     "dotenv": "^17.3.1",
+    "eslint": "^10.9.1",
     "playwright-qase-reporter": "^2.7.0",
+    "prettier": "^3.9.6",
     "tsx": "^4.22.4",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.68.0",
     "wait-on": "^9.0.4"
+  },
+  "dependencies": {
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1"
   }
 }

@@ -15,7 +15,10 @@ export class CardService extends ApiClient {
     });
   }
 
-  @step((token: string, payload: CreateCardRequest) => `Add payment card for cardholder: ${payload.fullName}`)
+  @step(
+    (token: string, payload: CreateCardRequest) =>
+      `Add payment card for cardholder: ${payload.fullName}`,
+  )
   async create(token: string, payload: CreateCardRequest) {
     return this.post("/api/Cards/", {
       headers: {

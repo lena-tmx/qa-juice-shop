@@ -1,6 +1,8 @@
-import { qase } from 'playwright-qase-reporter';
+import { qase } from "playwright-qase-reporter";
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
+import { productListResponseSchema } from "@src/api/schemas/api.schemas";
+import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Products API", () => {
   test(
@@ -19,8 +21,7 @@ test.describe("Products API", () => {
       expect(response.ok()).toBeTruthy();
       expect(response.status()).toBe(200);
 
-      const body = await response.json();
-      expect(Array.isArray(body.data)).toBeTruthy();
+      const body = await parseApiResponse(response, productListResponseSchema);
       expect(body.data.length).toBeGreaterThan(0);
     },
   );
@@ -34,10 +35,15 @@ test.describe("Products API", () => {
       const response = await api.products.search("apple");
 
       expect(response.ok()).toBeTruthy();
-      const body = await response.json();
+      const body = await parseApiResponse(response, productListResponseSchema);
 
-      expect(Array.isArray(body.data)).toBeTruthy();
       expect(body.data.length).toBeGreaterThan(0);
+      expect(
+        body.data.some((product) =>
+          product.name.toLowerCase().includes("apple"),
+        ),
+        "Expected at least one search result with 'apple' in its name",
+      ).toBeTruthy();
     },
   );
 
@@ -50,7 +56,7 @@ test.describe("Products API", () => {
       const response = await api.products.search("zzzzzzzz-no-such-product");
 
       expect(response.ok()).toBeTruthy();
-      const body = await response.json();
+      const body = await parseApiResponse(response, productListResponseSchema);
 
       expect(body.data).toEqual([]);
     },

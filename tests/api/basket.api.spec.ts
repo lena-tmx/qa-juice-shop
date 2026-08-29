@@ -1,7 +1,9 @@
-import { qase } from 'playwright-qase-reporter';
+import { qase } from "playwright-qase-reporter";
 import { expect, test } from "../fixtures";
 import { createTestUser } from "@src/data/factories/userFactory";
 import { Tags } from "../attributes/tags";
+import { basketItemResponseSchema } from "@src/api/schemas/api.schemas";
+import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Basket API", () => {
   test(
@@ -25,7 +27,10 @@ test.describe("Basket API", () => {
   );
 
   test(
-    qase(65, "should reject adding basket item without an auth token — expects 401"),
+    qase(
+      65,
+      "should reject adding basket item without an auth token — expects 401",
+    ),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.BASKET, Tags.SCENARIO.NEGATIVE],
     },
@@ -58,7 +63,10 @@ test.describe("Basket API", () => {
       });
 
       expect(addResponse.status()).toBe(200);
-      const addBody = await addResponse.json();
+      const addBody = await parseApiResponse(
+        addResponse,
+        basketItemResponseSchema,
+      );
       expect(addBody.data).toMatchObject({
         ProductId: productId,
         BasketId: auth.basketId,

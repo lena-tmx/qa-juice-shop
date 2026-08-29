@@ -1,7 +1,6 @@
 import { Page } from "@playwright/test";
 import { HomePage } from "./HomePage";
 import { LoginPage } from "./LoginPage";
-import { AccountPage } from "./AccountPage";
 import { BasketPage } from "./BasketPage";
 
 export class PagesManager {
@@ -9,7 +8,6 @@ export class PagesManager {
 
   private _homePage?: HomePage;
   private _loginPage?: LoginPage;
-  private _accountPage?: AccountPage;
   private _basketPage?: BasketPage;
 
   get homePage(): HomePage {
@@ -24,13 +22,6 @@ export class PagesManager {
       this._loginPage = new LoginPage(this.page);
     }
     return this._loginPage;
-  }
-
-  get accountPage(): AccountPage {
-    if (!this._accountPage) {
-      this._accountPage = new AccountPage(this.page);
-    }
-    return this._accountPage;
   }
 
   get basketPage(): BasketPage {

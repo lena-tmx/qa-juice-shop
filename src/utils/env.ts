@@ -13,10 +13,7 @@ function normalizeTag(tag: string): string {
 function parseTagsFilter(value: string | undefined): string[] {
   if (!value) return [];
 
-  return value
-    .split(",")
-    .map(normalizeTag)
-    .filter(Boolean);
+  return value.split(",").map(normalizeTag).filter(Boolean);
 }
 
 export const env = {
@@ -24,4 +21,6 @@ export const env = {
   startWebServer: toBoolean(process.env.START_WEB_SERVER, false),
   ci: toBoolean(process.env.CI, false),
   tagsFilter: parseTagsFilter(process.env.TAGS_FILTER),
+  cleanupAdminEmail: process.env.TEST_CLEANUP_ADMIN_EMAIL,
+  cleanupAdminPassword: process.env.TEST_CLEANUP_ADMIN_PASSWORD,
 };

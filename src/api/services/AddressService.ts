@@ -1,6 +1,6 @@
 import { APIRequestContext } from "@playwright/test";
 import { ApiClient } from "../clients/ApiClient";
-import { CreateAddressRequest, AddressResponse } from "../types/address.types";
+import { CreateAddressRequest } from "../types/address.types";
 import { step } from "@src/utils/step";
 
 export class AddressService extends ApiClient {
@@ -15,7 +15,10 @@ export class AddressService extends ApiClient {
     });
   }
 
-  @step((token: string, payload: CreateAddressRequest) => `Add delivery address for recipient: ${payload.fullName}`)
+  @step(
+    (token: string, payload: CreateAddressRequest) =>
+      `Add delivery address for recipient: ${payload.fullName}`,
+  )
   async create(token: string, payload: CreateAddressRequest) {
     return this.post("/api/Addresss/", {
       headers: {
