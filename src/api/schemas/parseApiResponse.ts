@@ -1,18 +1,40 @@
 import type { APIResponse } from "@playwright/test";
-import type { z } from "zod";
+import Ajv, {
+  type ErrorObject,
+  type JSONSchemaType,
+  type ValidateFunction,
+} from "ajv";
+import addFormats from "ajv-formats";
 
-export async function parseApiResponse<TSchema extends z.ZodType>(
+const ajv = new Ajv({ allErrors: true, strict: true });
+addFormats(ajv);
+
+const validators = new WeakMap<object, ValidateFunction>();
+
+function formatErrors(errors: ErrorObject[] | null | undefined): string {
+  return (errors ?? [])
+    .map(({ instancePath, message }) => `${instancePath || "/"} ${message}`)
+    .join("; ");
+}
+
+export async function parseApiResponse<T>(
   response: APIResponse,
-  schema: TSchema,
-): Promise<z.infer<TSchema>> {
+  schema: JSONSchemaType<T>,
+): Promise<T> {
   const body: unknown = await response.json();
-  const result = schema.safeParse(body);
+  let validate = validators.get(schema as object) as
+    ValidateFunction<T> | undefined;
 
-  if (!result.success) {
+  if (!validate) {
+    validate = ajv.compile<T>(schema);
+    validators.set(schema as object, validate);
+  }
+
+  if (!validate(body)) {
     throw new Error(
-      `API response schema validation failed (${response.status()} ${response.url()}): ${JSON.stringify(result.error.issues)}`,
+      `API response schema validation failed (${response.status()} ${response.url()}): ${formatErrors(validate.errors)}`,
     );
   }
 
-  return result.data;
+  return body;
 }

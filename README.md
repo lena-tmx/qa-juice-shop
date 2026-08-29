@@ -30,7 +30,7 @@ It covers UI, API, and security-focused scenarios and includes reusable fixtures
 - Playwright
 - Playwright MCP
 - Allure Playwright
-- Zod runtime API schema validation
+- AJV runtime validation against JSON Schema, ready for future OpenAPI integration
 - Docker Compose
 - GitHub Actions
 - dotenv
