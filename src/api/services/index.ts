@@ -1,7 +1,7 @@
 import { APIRequestContext } from "@playwright/test";
 import { AuthService } from "./AuthService";
 import { ProductsService } from "./ProductsService";
-import { BasketService } from "./BasketSrvice";
+import { BasketService } from "./BasketService";
 import { AddressService } from "./AddressService";
 import { CardService } from "./CardService";
 import { FeedbackService } from "./FeedbackService";

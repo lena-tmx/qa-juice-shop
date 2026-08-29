@@ -33,10 +33,6 @@ export class TestData {
     return faker.location.country();
   }
 
-  static getCardNumber(): number {
-    return Number(faker.finance.creditCardNumber("################"));
-  }
-
   static getFutureYear(): number {
     return faker.number.int({ min: 2080, max: 2099 });
   }

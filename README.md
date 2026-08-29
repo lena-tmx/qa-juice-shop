@@ -30,6 +30,7 @@ It covers UI, API, and security-focused scenarios and includes reusable fixtures
 - Playwright
 - Playwright MCP
 - Allure Playwright
+- Zod runtime API schema validation
 - Docker Compose
 - GitHub Actions
 - dotenv
@@ -45,6 +46,7 @@ The repository is organized into framework code and test suites.
 - [src/modals](src/modals) modal and banner objects
 - [src/api/clients](src/api/clients) low-level API client logic
 - [src/api/services](src/api/services) high-level domain API services
+- [src/api/schemas](src/api/schemas) runtime validation schemas for API responses
 - [src/data](src/data) test data and data factories
 - [src/utils](src/utils) framework utilities such as environment parsing and step decorators
 - [src/agents/analyzer](src/agents/analyzer) test result analyzer with flaky detection
@@ -108,6 +110,8 @@ CI=false
 - `QASE_TESTOPS_PROJECT` Qase project code; defaults to `ZEN`
 - `QASE_TESTOPS_RUN_ID` optional existing Qase run ID
 - `QASE_TESTOPS_RUN_TITLE` optional title for a newly created local run
+- `TEST_CLEANUP_ADMIN_EMAIL` optional admin account used to delete test users in persistent environments
+- `TEST_CLEANUP_ADMIN_PASSWORD` password for the optional cleanup admin account
 
 ## Running tests
 
@@ -119,7 +123,10 @@ npm run test:ci
 npm run test:ui
 npm run test:api
 npm run test:security
+npm run validate
 ```
+
+`npm run validate` runs TypeScript type checking, ESLint, and the Prettier formatting check. CI executes it before creating a Qase run or starting test shards.
 
 ### Browser-specific commands
 
@@ -202,6 +209,8 @@ Custom fixtures are defined in [tests/fixtures.ts](tests/fixtures.ts).
 
 - `pages` access to page objects through `PagesManager`
 - `api` access to grouped API service instances
+- `registeredUser` isolated API-created user scoped to one test
+- `authenticatedPages` page objects with a test-scoped user already logged in through the UI
 - `expect` re-exported Playwright assertions
 
 ### Example

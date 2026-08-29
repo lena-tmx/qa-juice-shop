@@ -48,14 +48,19 @@ export class AuthService extends ApiClient {
     }
   }
 
-  @step((email: string, password: string) => `Log in with credentials: ${email}`)
+  @step(
+    (email: string, _password: string) => `Log in with credentials: ${email}`,
+  )
   async login(email: string, password: string) {
     return this.post("/rest/user/login", {
       data: { email, password },
     });
   }
 
-  @step((email: string, password: string) => `Log in and retrieve session token: ${email}`)
+  @step(
+    (email: string, _password: string) =>
+      `Log in and retrieve session token: ${email}`,
+  )
   async loginAndGetAuthData(email: string, password: string) {
     const response = await this.login(email, password);
 
@@ -89,30 +94,8 @@ export class AuthService extends ApiClient {
     return user;
   }
 
-  @step("Create test user and log in")
-  async createAndLoginTestUser() {
-    const user = createTestUser();
-    const auth = await this.registerAndLogin(user);
-
-    return {
-      user,
-      auth,
-    };
-  }
-
-  @step("Retrieve current authenticated user")
-  async whoami(token: string) {
-    return this.get("/rest/user/whoami", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-  }
-
   @step("Change password")
-  async changePassword(
-    token: string,
-    current: string,
-    newPassword: string,
-  ) {
+  async changePassword(token: string, current: string, newPassword: string) {
     return this.get(
       `/rest/user/change-password?current=${encodeURIComponent(current)}&new=${encodeURIComponent(newPassword)}&repeat=${encodeURIComponent(newPassword)}`,
       {
@@ -127,8 +110,7 @@ export class AuthService extends ApiClient {
   }
 
   @step(
-    (userId: number, _adminToken: string) =>
-      `Delete test user (id: ${userId})`,
+    (userId: number, _adminToken: string) => `Delete test user (id: ${userId})`,
   )
   async deleteUser(userId: number, adminToken: string) {
     return this.delete(`/api/Users/${userId}`, {

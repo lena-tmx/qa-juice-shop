@@ -30,14 +30,6 @@ export class Menu extends BaseElement {
     await item.click();
   }
 
-  @step((name: string) => `Select menu item: ${name}`)
-  async selectItem(name: string) {
-    const itemLocator = this.panel
-      .last()
-      .getByRole("menuitem", { name: name, exact: false });
-    await this.clickItem(itemLocator);
-  }
-
   @step((email: string) => `Verify menu shows user email: ${email}`)
   async expectUserEmail(email: string) {
     await this.open();

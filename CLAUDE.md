@@ -36,7 +36,7 @@ tests/
   fixtures.ts      # Custom test fixtures (pages, api)
 
 src/
-  pages/           # Page Objects (BasePage, HomePage, LoginPage, BasketPage, AccountPage)
+  pages/           # Page Objects (BasePage, HomePage, LoginPage, BasketPage)
     PagesManager.ts # Lazy-init registry for all page objects
   components/
     Navbar.ts       # Shared navbar component
@@ -593,12 +593,9 @@ reports/crawler/
 
 ## Current Development Priorities
 
-1. Fix typo: `BasketSrvice.ts` -> `BasketService.ts`
-2. Fill empty `auth.security.spec.ts` with authentication security tests
-3. Expand security test coverage (SQL injection, broken auth, security headers)
-4. Add missing Page Objects (RegistrationPage, ProductDetailPage)
-5. Add crawler agent
-6. Generate crawler reports
-7. Later: analyzer agent
-8. Later: generator agent
-9. Later: validator agent
+1. Expand security test coverage (SQL injection, broken auth, security headers)
+2. Add Page Objects only when a tested flow requires them
+3. Add crawler agent
+4. Generate crawler reports
+5. Later: generator agent
+6. Later: validator agent
