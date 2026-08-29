@@ -38,6 +38,14 @@ test.describe("Products API", () => {
 
       expect(Array.isArray(body.data)).toBeTruthy();
       expect(body.data.length).toBeGreaterThan(0);
+      expect(
+        body.data.some(
+          (product: { name?: unknown }) =>
+            typeof product.name === "string" &&
+            product.name.toLowerCase().includes("apple"),
+        ),
+        "Expected at least one search result with 'apple' in its name",
+      ).toBeTruthy();
     },
   );
 
