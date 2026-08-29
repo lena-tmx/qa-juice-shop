@@ -13,6 +13,6 @@ export class CookieBanner extends BaseBanner {
   @step("Dismiss cookie banner if visible")
   async closeIfVisible(): Promise<void> {
     if (!(await this.isVisible())) return;
-    await this.clickAndWaitToDisappear(this.dismissButton, this.container);
+    await this.clickAndWaitToDisappear(this.dismissButton, this.dismissButton);
   }
 }

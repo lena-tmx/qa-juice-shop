@@ -1,4 +1,4 @@
-import { Page } from "@playwright/test";
+import { Locator, Page } from "@playwright/test";
 import { step } from "@src/utils/step";
 import { WelcomeBanner } from "../modals/WelcomeBanner";
 import { CookieBanner } from "../modals/CookieBanner";
@@ -40,6 +40,24 @@ export class BasePage {
         lastError = error;
       }
     }
+    throw lastError;
+  }
+
+  protected async clickAfterDismissingBanners(
+    locator: Locator,
+  ): Promise<void> {
+    let lastError: unknown;
+
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      await this.dismissBlockingBanners();
+      try {
+        await locator.click({ timeout: 5000 });
+        return;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
     throw lastError;
   }
 }
