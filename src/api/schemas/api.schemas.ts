@@ -61,7 +61,12 @@ export const loginResponseSchema = z
 
 export const userResponseSchema = z
   .object({
-    data: z.object({ email: z.string().email() }).passthrough(),
+    data: z
+      .object({
+        id: z.number().int().positive(),
+        email: z.string().email(),
+      })
+      .passthrough(),
   })
   .passthrough();
 

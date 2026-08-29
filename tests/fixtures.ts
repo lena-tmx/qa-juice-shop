@@ -16,7 +16,9 @@ export const test = base.extend<TestFixtures>({
   },
 
   api: async ({ request }, use) => {
-    await use(new ApiServices(request));
+    const services = new ApiServices(request);
+    await use(services);
+    await services.cleanup();
   },
 
   registeredUser: async ({ api }, use) => {

@@ -4,15 +4,19 @@ import { createTestUser, type TestUser } from "@src/data/factories/userFactory";
 import { step } from "@src/utils/step";
 import { loginResponseSchema } from "../schemas/api.schemas";
 import { parseApiResponse } from "../schemas/parseApiResponse";
+import { userResponseSchema } from "../schemas/api.schemas";
+import { env } from "@src/utils/env";
 
 export class AuthService extends ApiClient {
+  private readonly createdUserIds = new Set<number>();
+
   constructor(request: APIRequestContext) {
     super(request);
   }
 
   @step((user: TestUser) => `Attempt to register user: ${user.email}`)
   async register(user: TestUser) {
-    return this.post("/api/Users/", {
+    const response = await this.post("/api/Users/", {
       data: {
         email: user.email,
         password: user.password,
@@ -23,6 +27,13 @@ export class AuthService extends ApiClient {
         securityAnswer: user.securityQuestion.answer,
       },
     });
+
+    if ([200, 201].includes(response.status())) {
+      const registered = await parseApiResponse(response, userResponseSchema);
+      this.createdUserIds.add(registered.data.id);
+    }
+
+    return response;
   }
 
   @step((user: TestUser) => `Set up registered user: ${user.email}`)
@@ -113,5 +124,43 @@ export class AuthService extends ApiClient {
   @step("Retrieve list of security questions")
   async getSecurityQuestions() {
     return this.get("/api/SecurityQuestions");
+  }
+
+  @step(
+    (userId: number, _adminToken: string) =>
+      `Delete test user (id: ${userId})`,
+  )
+  async deleteUser(userId: number, adminToken: string) {
+    return this.delete(`/api/Users/${userId}`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+  }
+
+  async cleanupCreatedUsers(): Promise<void> {
+    if (this.createdUserIds.size === 0) return;
+
+    if (!env.cleanupAdminEmail || !env.cleanupAdminPassword) {
+      if (!env.ci) {
+        console.warn(
+          "Test-user cleanup skipped: set TEST_CLEANUP_ADMIN_EMAIL and TEST_CLEANUP_ADMIN_PASSWORD for persistent environments.",
+        );
+      }
+      return;
+    }
+
+    const admin = await this.loginAndGetAuthData(
+      env.cleanupAdminEmail,
+      env.cleanupAdminPassword,
+    );
+
+    for (const userId of this.createdUserIds) {
+      const response = await this.deleteUser(userId, admin.token);
+      if (![200, 204].includes(response.status())) {
+        throw new Error(
+          `Test-user cleanup failed for user ${userId}: HTTP ${response.status()}`,
+        );
+      }
+      this.createdUserIds.delete(userId);
+    }
   }
 }

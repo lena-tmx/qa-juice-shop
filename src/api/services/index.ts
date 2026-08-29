@@ -25,4 +25,8 @@ export class ApiServices {
     this.feedback = new FeedbackService(request);
     this.order = new OrderService(request);
   }
+
+  async cleanup(): Promise<void> {
+    await this.auth.cleanupCreatedUsers();
+  }
 }
