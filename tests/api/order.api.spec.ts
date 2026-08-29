@@ -2,6 +2,8 @@ import { qase } from 'playwright-qase-reporter';
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 import { createTestUser } from "@src/data/factories/userFactory";
+import { orderHistoryResponseSchema } from "@src/api/schemas/api.schemas";
+import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Order API", () => {
   test(
@@ -15,7 +17,10 @@ test.describe("Order API", () => {
       const response = await api.order.getHistory(auth.token);
 
       expect(response.status()).toBe(200);
-      const body = await response.json();
+      const body = await parseApiResponse(
+        response,
+        orderHistoryResponseSchema,
+      );
       expect(body.data).toEqual([]);
     },
   );

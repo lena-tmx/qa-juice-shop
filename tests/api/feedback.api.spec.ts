@@ -3,6 +3,8 @@ import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 import { createTestUser } from "@src/data/factories/userFactory";
 import { TestData } from "@src/utils/TestData";
+import { feedbackResponseSchema } from "@src/api/schemas/api.schemas";
+import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Feedback API", () => {
   test(
@@ -22,7 +24,7 @@ test.describe("Feedback API", () => {
       );
 
       expect(response.status()).toBe(201);
-      const body = await response.json();
+      const body = await parseApiResponse(response, feedbackResponseSchema);
       expect(body.data.comment).toBe(comment);
       expect(body.data.rating).toBe(rating);
     },

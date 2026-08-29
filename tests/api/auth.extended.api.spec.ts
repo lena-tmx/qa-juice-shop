@@ -2,6 +2,11 @@ import { qase } from 'playwright-qase-reporter';
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 import { createTestUser } from "@src/data/factories/userFactory";
+import {
+  securityQuestionsResponseSchema,
+  userResponseSchema,
+} from "@src/api/schemas/api.schemas";
+import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Auth Extended API", () => {
   test(
@@ -13,7 +18,10 @@ test.describe("Auth Extended API", () => {
       const response = await api.auth.getSecurityQuestions();
 
       expect(response.status()).toBe(200);
-      const body = await response.json();
+      const body = await parseApiResponse(
+        response,
+        securityQuestionsResponseSchema,
+      );
       expect(body.data.length).toBeGreaterThan(0);
       expect(body.data[0].question).toBeTruthy();
     },
@@ -33,7 +41,7 @@ test.describe("Auth Extended API", () => {
       const response = await api.auth.register(user);
 
       expect([200, 201]).toContain(response.status());
-      const body = await response.json();
+      const body = await parseApiResponse(response, userResponseSchema);
       expect(body.data.email).toBe(user.email);
     },
   );

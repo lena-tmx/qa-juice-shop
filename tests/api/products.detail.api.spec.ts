@@ -1,6 +1,8 @@
 import { qase } from 'playwright-qase-reporter';
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
+import { productResponseSchema } from "@src/api/schemas/api.schemas";
+import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Products Detail API", () => {
   test(
@@ -12,7 +14,7 @@ test.describe("Products Detail API", () => {
       const response = await api.products.getById(1);
 
       expect(response.status()).toBe(200);
-      const body = await response.json();
+      const body = await parseApiResponse(response, productResponseSchema);
       expect(body.data.id).toBe(1);
       expect(body.data.name).toBeTruthy();
       expect(body.data.price).toBeGreaterThan(0);

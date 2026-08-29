@@ -3,6 +3,11 @@ import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 import { createTestUser } from "@src/data/factories/userFactory";
 import { createTestCard } from "@src/data/factories/cardFactory";
+import {
+  cardListResponseSchema,
+  cardResponseSchema,
+} from "@src/api/schemas/api.schemas";
+import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Card API", () => {
   test(
@@ -17,7 +22,7 @@ test.describe("Card API", () => {
       const response = await api.card.create(auth.token, card);
 
       expect(response.status()).toBe(201);
-      const body = await response.json();
+      const body = await parseApiResponse(response, cardResponseSchema);
       expect(body.data.fullName).toBe(card.fullName);
       expect(body.data.expMonth).toBe(card.expMonth);
     },
@@ -34,7 +39,7 @@ test.describe("Card API", () => {
       const response = await api.card.getAll(auth.token);
 
       expect(response.status()).toBe(200);
-      const body = await response.json();
+      const body = await parseApiResponse(response, cardListResponseSchema);
       expect(body.data).toEqual([]);
     },
   );

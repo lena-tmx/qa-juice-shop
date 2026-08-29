@@ -2,6 +2,11 @@ import { qase } from 'playwright-qase-reporter';
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 import { createTestUser } from "@src/data/factories/userFactory";
+import {
+  basketItemResponseSchema,
+  basketResponseSchema,
+} from "@src/api/schemas/api.schemas";
+import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Basket CRUD API", () => {
   test(
@@ -19,7 +24,10 @@ test.describe("Basket CRUD API", () => {
       });
 
       expect(addResponse.status()).toBe(200);
-      const addBody = await addResponse.json();
+      const addBody = await parseApiResponse(
+        addResponse,
+        basketItemResponseSchema,
+      );
       expect(addBody.data).toMatchObject({
         ProductId: 1,
         BasketId: auth.basketId,
@@ -34,7 +42,10 @@ test.describe("Basket CRUD API", () => {
       );
 
       expect(updateResponse.status()).toBe(200);
-      const updateBody = await updateResponse.json();
+      const updateBody = await parseApiResponse(
+        updateResponse,
+        basketItemResponseSchema,
+      );
       expect(updateBody.data.quantity).toBe(5);
     },
   );
@@ -54,7 +65,10 @@ test.describe("Basket CRUD API", () => {
       });
 
       expect(addResponse.status()).toBe(200);
-      const addBody = await addResponse.json();
+      const addBody = await parseApiResponse(
+        addResponse,
+        basketItemResponseSchema,
+      );
       expect(addBody.data).toMatchObject({
         ProductId: 1,
         BasketId: auth.basketId,
@@ -82,7 +96,7 @@ test.describe("Basket CRUD API", () => {
       const response = await api.basket.getBasket(auth.basketId, auth.token);
 
       expect(response.status()).toBe(200);
-      const body = await response.json();
+      const body = await parseApiResponse(response, basketResponseSchema);
       expect(body.data.id).toBe(auth.basketId);
       expect(body.data.Products).toBeDefined();
     },

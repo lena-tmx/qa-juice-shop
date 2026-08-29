@@ -2,6 +2,8 @@ import { APIRequestContext } from "@playwright/test";
 import { ApiClient } from "../clients/ApiClient";
 import { CreateFeedbackRequest, CaptchaResponse } from "../types/feedback.types";
 import { step } from "@src/utils/step";
+import { captchaSchema } from "../schemas/api.schemas";
+import { parseApiResponse } from "../schemas/parseApiResponse";
 
 export class FeedbackService extends ApiClient {
   constructor(request: APIRequestContext) {
@@ -13,7 +15,7 @@ export class FeedbackService extends ApiClient {
     const response = await this.get("/rest/captcha/", {
       headers: { Authorization: `Bearer ${token}` },
     });
-    return response.json();
+    return parseApiResponse(response, captchaSchema);
   }
 
   @step((token: string, payload: CreateFeedbackRequest) => `Submit feedback: ${payload.rating} star rating`)

@@ -2,6 +2,8 @@ import { APIRequestContext } from "@playwright/test";
 import { ApiClient } from "../clients/ApiClient";
 import { createTestUser, type TestUser } from "@src/data/factories/userFactory";
 import { step } from "@src/utils/step";
+import { loginResponseSchema } from "../schemas/api.schemas";
+import { parseApiResponse } from "../schemas/parseApiResponse";
 
 export class AuthService extends ApiClient {
   constructor(request: APIRequestContext) {
@@ -53,7 +55,7 @@ export class AuthService extends ApiClient {
       );
     }
 
-    const parsed = await response.json();
+    const parsed = await parseApiResponse(response, loginResponseSchema);
 
     return {
       token: parsed.token ?? parsed.authentication?.token,

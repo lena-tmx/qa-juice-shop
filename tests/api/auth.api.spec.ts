@@ -1,6 +1,8 @@
 import { qase } from 'playwright-qase-reporter';
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
+import { loginResponseSchema } from "@src/api/schemas/api.schemas";
+import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Auth API", () => {
   let user: { email: string; password: string };
@@ -24,9 +26,8 @@ test.describe("Auth API", () => {
 
       expect(response.status()).toBe(200);
 
-      const body = await response.json();
-      expect(body.authentication).toBeDefined();
-      expect(body.token || body.authentication.token).toBeTruthy();
+      const body = await parseApiResponse(response, loginResponseSchema);
+      expect(body.token ?? body.authentication.token).toBeTruthy();
     },
   );
 

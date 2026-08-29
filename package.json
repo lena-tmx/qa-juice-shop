@@ -48,5 +48,8 @@
     "tsx": "^4.22.4",
     "typescript": "^5.9.3",
     "wait-on": "^9.0.4"
+  },
+  "dependencies": {
+    "zod": "^4.5.2"
   }
 }

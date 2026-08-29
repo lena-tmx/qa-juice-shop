@@ -5,6 +5,8 @@ import {
   AddBasketItemRequest,
 } from "../types/basket.types";
 import { step } from "@src/utils/step";
+import { basketItemsResponseSchema } from "../schemas/api.schemas";
+import { parseApiResponse } from "../schemas/parseApiResponse";
 
 export class BasketService extends ApiClient {
   constructor(request: APIRequestContext) {
@@ -46,7 +48,7 @@ export class BasketService extends ApiClient {
   @step("Retrieve basket items")
   async getBasketItems(token: string): Promise<BasketItemResponse[]> {
     const response = await this.getBasketItemsResponse(token);
-    const body = await response.json();
+    const body = await parseApiResponse(response, basketItemsResponseSchema);
     return body.data;
   }
 
