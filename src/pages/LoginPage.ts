@@ -37,6 +37,7 @@ export class LoginPage extends BasePage {
     await this.dismissBlockingBanners();
     await this.emailInput.fill(email);
     await this.passwordInput.fill(password);
+    await this.dismissBlockingBanners();
     await this.loginButton.click();
   }
 }

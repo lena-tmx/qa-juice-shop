@@ -17,7 +17,14 @@ test.describe("Basket CRUD API", () => {
         BasketId: auth.basketId,
         quantity: 1,
       });
+
+      expect(addResponse.status()).toBe(200);
       const addBody = await addResponse.json();
+      expect(addBody.data).toMatchObject({
+        ProductId: 1,
+        BasketId: auth.basketId,
+        quantity: 1,
+      });
       const itemId = addBody.data.id;
 
       const updateResponse = await api.basket.updateItem(
@@ -45,12 +52,22 @@ test.describe("Basket CRUD API", () => {
         BasketId: auth.basketId,
         quantity: 1,
       });
+
+      expect(addResponse.status()).toBe(200);
       const addBody = await addResponse.json();
+      expect(addBody.data).toMatchObject({
+        ProductId: 1,
+        BasketId: auth.basketId,
+        quantity: 1,
+      });
       const itemId = addBody.data.id;
 
       const deleteResponse = await api.basket.deleteItem(auth.token, itemId);
 
       expect(deleteResponse.status()).toBe(200);
+
+      const basketItems = await api.basket.getBasketItems(auth.token);
+      expect(basketItems.find((item) => item.id === itemId)).toBeUndefined();
     },
   );
 

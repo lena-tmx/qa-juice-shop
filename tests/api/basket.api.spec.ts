@@ -42,18 +42,39 @@ test.describe("Basket API", () => {
   );
 
   test(
-    qase(6, "should return basket items list"),
+    qase(6, "should return the added item in the basket items list"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.BASKET, Tags.SCENARIO.POSITIVE],
     },
     async ({ api }) => {
-      const user = createTestUser();
-      const auth = await api.auth.registerAndLogin(user);
+      const auth = await api.auth.registerAndLogin(createTestUser());
+      const productId = 1;
+      const quantity = 1;
+
+      const addResponse = await api.basket.addItem(auth.token, {
+        ProductId: productId,
+        BasketId: auth.basketId,
+        quantity,
+      });
+
+      expect(addResponse.status()).toBe(200);
+      const addBody = await addResponse.json();
+      expect(addBody.data).toMatchObject({
+        ProductId: productId,
+        BasketId: auth.basketId,
+        quantity,
+      });
 
       const basketItems = await api.basket.getBasketItems(auth.token);
 
-      expect(Array.isArray(basketItems)).toBeTruthy();
-      expect(basketItems.length).toBeGreaterThanOrEqual(0);
+      expect(basketItems).toContainEqual(
+        expect.objectContaining({
+          id: addBody.data.id,
+          ProductId: productId,
+          BasketId: auth.basketId,
+          quantity,
+        }),
+      );
     },
   );
 });

@@ -40,9 +40,7 @@ export class HomePage extends BasePage {
   }
 
   private productCard(productName: string): Locator {
-    return this.page.locator("mat-card").filter({
-      has: this.page.getByText(productName, { exact: false }),
-    });
+    return this.page.locator("mat-card").filter({ hasText: productName });
   }
 
   @step((productName: string) => `Add product to basket: ${productName}`)
@@ -52,33 +50,28 @@ export class HomePage extends BasePage {
     const card = this.productCard(productName);
     await expect(card).toBeVisible();
 
-    const addButton = card.getByRole("button", { name: /add to basket/i });
-    await expect(
-      this.page.locator(".mat-mdc-snack-bar-label.mdc-snackbar__label"),
-    ).toBeVisible();
+    const addButton = card.locator("button").filter({
+      hasText: /add to basket/i,
+    });
     await expect(addButton).toBeVisible();
-    await addButton.click();
-  }
-
-  @step((productName: string) => `Add product to basket and wait for confirmation: ${productName}`)
-  async addProductToBasketWithWait(productName: string): Promise<void> {
     await this.dismissBlockingBanners();
-
-    const card = this.productCard(productName);
-    await expect(card).toBeVisible();
-
-    const addButton = card.getByRole("button", { name: /add to basket/i });
-    await expect(addButton).toBeVisible();
 
     const addToBasketResponsePromise = this.page.waitForResponse((response) => {
       return (
         response.url().includes("/api/BasketItems") &&
-        response.request().method() === "POST" &&
-        [200, 201].includes(response.status())
+        response.request().method() === "POST"
       );
     });
 
     await addButton.click();
-    await addToBasketResponsePromise;
+    const response = await addToBasketResponsePromise;
+
+    expect(
+      response.status(),
+      `Expected add-to-basket request to succeed, but got ${response.status()}`,
+    ).toBe(200);
+    await expect(
+      this.page.locator(".mat-mdc-snack-bar-label.mdc-snackbar__label"),
+    ).toBeVisible();
   }
 }

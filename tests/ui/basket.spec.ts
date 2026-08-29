@@ -43,7 +43,7 @@ test.describe(`Basket UI`, () => {
       await pages.loginPage.login(newUser.email, newUser.password);
       await pages.homePage.expectLoaded();
 
-      await pages.homePage.addProductToBasketWithWait(productName);
+      await pages.homePage.addProductToBasket(productName);
 
       await pages.homePage.navbar.openBasket();
       await pages.basketPage.expectLoaded();

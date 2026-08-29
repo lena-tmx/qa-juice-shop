@@ -28,7 +28,10 @@ test.describe("Broken Access Control", () => {
   );
 
   test(
-    "should not allow one user to access another user's basket (IDOR)",
+    qase(
+      96,
+      "should not allow one user to access another user's basket (IDOR)",
+    ),
     {
       tag: [
         Tags.TEST_TYPE.SECURITY,
