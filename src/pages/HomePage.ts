@@ -40,7 +40,7 @@ export class HomePage extends BasePage {
   }
 
   private productCard(productName: string): Locator {
-    return this.page.getByRole("article").filter({ hasText: productName });
+    return this.page.locator("mat-card").filter({ hasText: productName });
   }
 
   @step((productName: string) => `Add product to basket: ${productName}`)
@@ -50,7 +50,9 @@ export class HomePage extends BasePage {
     const card = this.productCard(productName);
     await expect(card).toBeVisible();
 
-    const addButton = card.getByRole("button", { name: /add to basket/i });
+    const addButton = card.locator("button").filter({
+      hasText: /add to basket/i,
+    });
     await expect(addButton).toBeVisible();
     await this.dismissBlockingBanners();
 
