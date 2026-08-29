@@ -5,12 +5,6 @@ import { loginResponseSchema } from "@src/api/schemas/api.schemas";
 import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Auth API", () => {
-  let user: { email: string; password: string };
-
-  test.beforeAll("Create user via API", async ({ api }) => {
-    user = await api.auth.createTestUser();
-  });
-
   test(
     qase(4, "should login existing user"),
     {
@@ -21,8 +15,11 @@ test.describe("Auth API", () => {
         Tags.SCENARIO.POSITIVE,
       ],
     },
-    async ({ api }) => {
-      const response = await api.auth.login(user.email, user.password);
+    async ({ api, registeredUser }) => {
+      const response = await api.auth.login(
+        registeredUser.email,
+        registeredUser.password,
+      );
 
       expect(response.status()).toBe(200);
 
@@ -36,8 +33,11 @@ test.describe("Auth API", () => {
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.AUTH, Tags.SCENARIO.NEGATIVE],
     },
-    async ({ api }) => {
-      const response = await api.auth.login(user.email, "wrong-password");
+    async ({ api, registeredUser }) => {
+      const response = await api.auth.login(
+        registeredUser.email,
+        "wrong-password",
+      );
       const status = response.status();
 
       expect(status, `Expected 401, but got ${status}`).toBe(401);
