@@ -72,9 +72,7 @@ export const userResponseSchema = z
 
 export const securityQuestionsResponseSchema = z
   .object({
-    data: z.array(
-      z.object({ question: z.string().min(1) }).passthrough(),
-    ),
+    data: z.array(z.object({ question: z.string().min(1) }).passthrough()),
   })
   .passthrough();
 

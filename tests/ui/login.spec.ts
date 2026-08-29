@@ -1,4 +1,4 @@
-import { qase } from 'playwright-qase-reporter';
+import { qase } from "playwright-qase-reporter";
 import { test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 

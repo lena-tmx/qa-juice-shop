@@ -1,6 +1,9 @@
 import { APIRequestContext } from "@playwright/test";
 import { ApiClient } from "../clients/ApiClient";
-import { CreateFeedbackRequest, CaptchaResponse } from "../types/feedback.types";
+import {
+  CreateFeedbackRequest,
+  CaptchaResponse,
+} from "../types/feedback.types";
 import { step } from "@src/utils/step";
 import { captchaSchema } from "../schemas/api.schemas";
 import { parseApiResponse } from "../schemas/parseApiResponse";
@@ -18,7 +21,10 @@ export class FeedbackService extends ApiClient {
     return parseApiResponse(response, captchaSchema);
   }
 
-  @step((token: string, payload: CreateFeedbackRequest) => `Submit feedback: ${payload.rating} star rating`)
+  @step(
+    (token: string, payload: CreateFeedbackRequest) =>
+      `Submit feedback: ${payload.rating} star rating`,
+  )
   async submit(token: string, payload: CreateFeedbackRequest) {
     return this.post("/api/Feedbacks/", {
       headers: {
@@ -29,7 +35,10 @@ export class FeedbackService extends ApiClient {
     });
   }
 
-  @step((token: string, comment: string, rating: number) => `Submit feedback with valid CAPTCHA: ${rating} star rating`)
+  @step(
+    (token: string, comment: string, rating: number) =>
+      `Submit feedback with valid CAPTCHA: ${rating} star rating`,
+  )
   async submitWithCaptcha(token: string, comment: string, rating: number) {
     const captcha = await this.getCaptcha(token);
     return this.submit(token, {

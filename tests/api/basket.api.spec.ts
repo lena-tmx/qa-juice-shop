@@ -1,4 +1,4 @@
-import { qase } from 'playwright-qase-reporter';
+import { qase } from "playwright-qase-reporter";
 import { expect, test } from "../fixtures";
 import { createTestUser } from "@src/data/factories/userFactory";
 import { Tags } from "../attributes/tags";
@@ -27,7 +27,10 @@ test.describe("Basket API", () => {
   );
 
   test(
-    qase(65, "should reject adding basket item without an auth token — expects 401"),
+    qase(
+      65,
+      "should reject adding basket item without an auth token — expects 401",
+    ),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.BASKET, Tags.SCENARIO.NEGATIVE],
     },

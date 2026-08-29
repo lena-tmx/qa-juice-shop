@@ -403,9 +403,13 @@ function formatReport(report: CoverageReport): string {
 
 function formatSlackSummary(report: CoverageReport): string {
   const lines: string[] = [];
-  const pct = report.summary.totalFeatures > 0
-    ? ((report.summary.coveredFeatures / report.summary.totalFeatures) * 100).toFixed(0)
-    : "0";
+  const pct =
+    report.summary.totalFeatures > 0
+      ? (
+          (report.summary.coveredFeatures / report.summary.totalFeatures) *
+          100
+        ).toFixed(0)
+      : "0";
 
   lines.push(":clipboard: *Test Coverage*");
   lines.push("");
@@ -430,7 +434,9 @@ function formatSlackSummary(report: CoverageReport): string {
 
   if (report.uncoveredFeatures.length > 0) {
     lines.push("");
-    lines.push(`:warning: *Uncovered features (${report.uncoveredFeatures.length}):*`);
+    lines.push(
+      `:warning: *Uncovered features (${report.uncoveredFeatures.length}):*`,
+    );
     lines.push(`  ${report.uncoveredFeatures.join(", ")}`);
   }
 
@@ -445,14 +451,14 @@ const filteredArgs = args.filter((a) => a !== "--slack");
 
 const testsDir = path.resolve(process.cwd(), "tests");
 const harPath = filteredArgs[0] || "";
-const outputPath = filteredArgs[1] || (slackMode ? "coverage-message.txt" : "reports/coverage/coverage-report.md");
+const outputPath =
+  filteredArgs[1] ||
+  (slackMode ? "coverage-message.txt" : "reports/coverage/coverage-report.md");
 
 const tests = parseTestFiles(testsDir);
 const featureMatrix = buildFeatureMatrix(tests);
 const coveredFeatures = new Set(featureMatrix.map((f) => f.feature));
-const uncoveredFeatures = KNOWN_FEATURES.filter(
-  (f) => !coveredFeatures.has(f),
-);
+const uncoveredFeatures = KNOWN_FEATURES.filter((f) => !coveredFeatures.has(f));
 
 let routeCoverage: RouteCoverage[] = [];
 let apiCoverage: ApiCoverage[] = [];

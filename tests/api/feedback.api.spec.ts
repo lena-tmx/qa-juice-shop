@@ -1,4 +1,4 @@
-import { qase } from 'playwright-qase-reporter';
+import { qase } from "playwright-qase-reporter";
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 import { createTestUser } from "@src/data/factories/userFactory";
@@ -31,7 +31,10 @@ test.describe("Feedback API", () => {
   );
 
   test(
-    qase(69, "should reject feedback with an incorrect CAPTCHA answer — expects 401"),
+    qase(
+      69,
+      "should reject feedback with an incorrect CAPTCHA answer — expects 401",
+    ),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.FEEDBACK, Tags.SCENARIO.NEGATIVE],
     },

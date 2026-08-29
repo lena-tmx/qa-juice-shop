@@ -1,9 +1,7 @@
-import { qase } from 'playwright-qase-reporter';
+import { qase } from "playwright-qase-reporter";
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
-import {
-  productListResponseSchema,
-} from "@src/api/schemas/api.schemas";
+import { productListResponseSchema } from "@src/api/schemas/api.schemas";
 import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Products API", () => {

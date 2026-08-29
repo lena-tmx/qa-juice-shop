@@ -1,4 +1,4 @@
-import { qase } from 'playwright-qase-reporter';
+import { qase } from "playwright-qase-reporter";
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 import { createTestUser } from "@src/data/factories/userFactory";
@@ -47,7 +47,10 @@ test.describe("Auth Extended API", () => {
   );
 
   test(
-    qase(68, "should reject registration with an already-used email — expects 400"),
+    qase(
+      68,
+      "should reject registration with an already-used email — expects 400",
+    ),
     {
       tag: [
         Tags.TEST_TYPE.API,
@@ -86,7 +89,10 @@ test.describe("Auth Extended API", () => {
   );
 
   test(
-    qase(72, "should reject password change with wrong current password — expects 401"),
+    qase(
+      72,
+      "should reject password change with wrong current password — expects 401",
+    ),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.AUTH, Tags.SCENARIO.NEGATIVE],
     },

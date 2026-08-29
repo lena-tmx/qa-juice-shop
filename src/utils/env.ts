@@ -13,10 +13,7 @@ function normalizeTag(tag: string): string {
 function parseTagsFilter(value: string | undefined): string[] {
   if (!value) return [];
 
-  return value
-    .split(",")
-    .map(normalizeTag)
-    .filter(Boolean);
+  return value.split(",").map(normalizeTag).filter(Boolean);
 }
 
 export const env = {

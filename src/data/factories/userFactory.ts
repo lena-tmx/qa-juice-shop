@@ -15,7 +15,10 @@ export interface TestUser {
 const SECURITY_QUESTION_POOL = [
   { id: SecurityQuestions.MOTHERS_BIRTH_DATE.id, answer: "01/01/01" },
   { id: SecurityQuestions.FAVORITE_PET.id, answer: faker.animal.dog() },
-  { id: SecurityQuestions.MOTHERS_MAIDEN_NAME.id, answer: faker.person.lastName() },
+  {
+    id: SecurityQuestions.MOTHERS_MAIDEN_NAME.id,
+    answer: faker.person.lastName(),
+  },
 ];
 
 export function createTestUser(overrides?: Partial<TestUser>): TestUser {

@@ -1,4 +1,4 @@
-import { qase } from 'playwright-qase-reporter';
+import { qase } from "playwright-qase-reporter";
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 import { createTestUser } from "@src/data/factories/userFactory";
@@ -35,11 +35,7 @@ test.describe("Basket CRUD API", () => {
       });
       const itemId = addBody.data.id;
 
-      const updateResponse = await api.basket.updateItem(
-        auth.token,
-        itemId,
-        5,
-      );
+      const updateResponse = await api.basket.updateItem(auth.token, itemId, 5);
 
       expect(updateResponse.status()).toBe(200);
       const updateBody = await parseApiResponse(

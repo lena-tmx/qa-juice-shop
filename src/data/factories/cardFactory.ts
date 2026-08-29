@@ -3,9 +3,7 @@ import { TestData } from "@src/utils/TestData";
 import { CreateCardRequest } from "@src/api/types/card.types";
 
 const VALID_CARD_NUMBERS = [
-  4111111111111111,
-  4222222222222222,
-  5500000000000004,
+  4111111111111111, 4222222222222222, 5500000000000004,
 ];
 
 export function createTestCard(

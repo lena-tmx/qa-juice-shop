@@ -111,7 +111,9 @@ const FEATURE_MAP: Record<string, string> = {
 
 function detectFeature(test: AnalyzedTest): string {
   const filename = test.file.split("/").pop() || "";
-  const base = filename.replace(/\.(api|ui|security|spec)\.spec\.ts$/, "").replace(/\.spec\.ts$/, "");
+  const base = filename
+    .replace(/\.(api|ui|security|spec)\.spec\.ts$/, "")
+    .replace(/\.spec\.ts$/, "");
   return FEATURE_MAP[base] || base.charAt(0).toUpperCase() + base.slice(1);
 }
 
@@ -123,8 +125,6 @@ function formatSlackMessage(tests: AnalyzedTest[]): string {
   const passed = tests.filter((t) => t.status === "expected");
   const failed = tests.filter((t) => t.status === "unexpected");
   const flaky = tests.filter((t) => t.status === "flaky");
-  const skipped = tests.filter((t) => t.status === "skipped");
-
   const total = tests.length;
   const passRate =
     total > 0
@@ -161,12 +161,21 @@ function formatSlackMessage(tests: AnalyzedTest[]): string {
     }
   }
 
-  const problematic = tests.filter((t) => t.status === "unexpected" || t.status === "flaky");
+  const problematic = tests.filter(
+    (t) => t.status === "unexpected" || t.status === "flaky",
+  );
   if (problematic.length > 0) {
-    const byFeature = new Map<string, { failed: number; flaky: number; tests: string[] }>();
+    const byFeature = new Map<
+      string,
+      { failed: number; flaky: number; tests: string[] }
+    >();
     for (const t of problematic) {
       const feature = detectFeature(t);
-      const entry = byFeature.get(feature) || { failed: 0, flaky: 0, tests: [] };
+      const entry = byFeature.get(feature) || {
+        failed: 0,
+        flaky: 0,
+        tests: [],
+      };
       if (t.status === "unexpected") entry.failed++;
       if (t.status === "flaky") entry.flaky++;
       entry.tests.push(t.title);
@@ -175,7 +184,9 @@ function formatSlackMessage(tests: AnalyzedTest[]): string {
 
     lines.push("");
     lines.push(":warning: *Affected Features:*");
-    const sortedFeatures = Array.from(byFeature.entries()).sort((a, b) => (b[1].failed + b[1].flaky) - (a[1].failed + a[1].flaky));
+    const sortedFeatures = Array.from(byFeature.entries()).sort(
+      (a, b) => b[1].failed + b[1].flaky - (a[1].failed + a[1].flaky),
+    );
     for (const [feature, data] of sortedFeatures) {
       const parts: string[] = [];
       if (data.failed > 0) parts.push(`${data.failed} failed`);

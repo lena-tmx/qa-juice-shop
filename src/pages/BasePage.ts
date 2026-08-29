@@ -43,9 +43,7 @@ export class BasePage {
     throw lastError;
   }
 
-  protected async clickAfterDismissingBanners(
-    locator: Locator,
-  ): Promise<void> {
+  protected async clickAfterDismissingBanners(locator: Locator): Promise<void> {
     let lastError: unknown;
 
     for (let attempt = 1; attempt <= 3; attempt++) {

@@ -1,4 +1,4 @@
-import { qase } from 'playwright-qase-reporter';
+import { qase } from "playwright-qase-reporter";
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 import { createTestUser } from "@src/data/factories/userFactory";
@@ -45,7 +45,10 @@ test.describe("Card API", () => {
   );
 
   test(
-    qase(67, "should reject adding a payment card without authentication — expects 401"),
+    qase(
+      67,
+      "should reject adding a payment card without authentication — expects 401",
+    ),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PAYMENT, Tags.SCENARIO.NEGATIVE],
     },
