@@ -77,9 +77,12 @@ export class HomePage extends BasePage {
       response.status(),
       `Expected add-to-basket request to succeed, but got ${response.status()}`,
     ).toBe(200);
-    await expect(
-      this.page.locator(".mat-mdc-snack-bar-label.mdc-snackbar__label"),
-    ).toBeVisible();
+    const basketNotification = this.page
+      .locator(".mat-mdc-snack-bar-label.mdc-snackbar__label")
+      .filter({ hasText: productName })
+      .filter({ hasText: /into basket/i });
+
+    await expect(basketNotification).toBeVisible();
   }
 
   @step(
