@@ -43,6 +43,13 @@ export class HomePage extends BasePage {
     await expect(this.page.getByText(/no results found/i)).toBeVisible();
   }
 
+  @step("Wait for search results to render")
+  async waitForSearchResultsRendered(): Promise<void> {
+    await this.page
+      .getByText(/no results found/i)
+      .waitFor({ state: "visible" });
+  }
+
   @step((productName: string) => `Add product to basket: ${productName}`)
   async addProductToBasket(productName: string): Promise<void> {
     await this.dismissBlockingBanners();

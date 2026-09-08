@@ -56,6 +56,7 @@ The repository is organized into framework code and test suites.
 - [tests/api](tests/api) API test suite
 - [tests/security](tests/security) security-focused test suite
 - [tests/attributes](tests/attributes) shared test metadata such as tags
+- [tests/helpers](tests/helpers) reusable test-only helpers such as browser dialog monitoring
 - [tests/fixtures.ts](tests/fixtures.ts) custom Playwright fixtures exposed to tests
 
 ### Key framework files
@@ -65,7 +66,7 @@ The repository is organized into framework code and test suites.
 - [src/utils/step.ts](src/utils/step.ts) decorator for wrapping methods with `test.step`
 - [tests/attributes/tags.ts](tests/attributes/tags.ts) central storage for reusable test tags
 - [docker-compose.yml](docker-compose.yml) local Juice Shop container setup
-- [.mcp.json](.mcp.json) Playwright MCP server configuration for Claude Code
+- [.mcp.json](.mcp.json) Playwright MCP server configuration for compatible coding clients
 
 ## Local setup
 
@@ -167,6 +168,7 @@ UI scenarios validate critical end-user flows in the browser:
 - [tests/ui/registration.spec.ts](tests/ui/registration.spec.ts) successful registration and login with every supported security question
 - [tests/ui/search.spec.ts](tests/ui/search.spec.ts) product search and empty-state handling for missing results
 - [tests/ui/basket.spec.ts](tests/ui/basket.spec.ts) add-to-basket flow, basket visibility, item removal, and empty basket checks
+- [tests/ui/productDetails.spec.ts](tests/ui/productDetails.spec.ts) product details validation against API data and modal closing
 
 ### API tests
 
@@ -189,6 +191,8 @@ Security-oriented scenarios check common vulnerable areas in Juice Shop:
 
 - [tests/security/basket.security.spec.ts](tests/security/basket.security.spec.ts) broken access control and IDOR checks around basket access and basket modification
 - [tests/security/xss.security.spec.ts](tests/security/xss.security.spec.ts) reflected payload handling in search API responses and script execution attempts in UI search
+
+The UI XSS scenario uses [tests/helpers/BrowserDialogMonitor.ts](tests/helpers/BrowserDialogMonitor.ts) to keep dialog observation active through search rendering, capture alert evidence, and dismiss blocking browser dialogs safely.
 
 The suite is organized with reusable tags from [tests/attributes/tags.ts](tests/attributes/tags.ts), which makes it possible to run smoke, auth, search, basket, UI, API, and security-focused subsets in local runs and in GitHub Actions.
 
@@ -502,6 +506,8 @@ npm run allure:open
 
 - `allure-results` raw result files
 - `allure-report` generated HTML report with dashboard, suite breakdown, and failure details
+- `playwright-report` generated Playwright HTML report
+- `blob-report` intermediate CI shard reports used to build the merged report
 - `test-results` Playwright output artifacts
 
 ### Example Allure report views
@@ -516,7 +522,7 @@ CI and manual GitHub Actions runs can publish the generated HTML report to GitHu
 
 Current public Pages URL:
 
-- [qa-juice-shop GitHub Pages report](https://lenache-1234.github.io/qa-juice-shop/)
+- [qa-juice-shop GitHub Pages report](https://lena-tmx.github.io/qa-juice-shop/)
 
 Where to find the published report link after a run:
 
@@ -566,7 +572,7 @@ Reports are saved to `reports/coverage/`. The `coverage:slack` command outputs a
 
 ### Playwright MCP
 
-The project is configured with [Playwright MCP](.mcp.json) for AI-assisted test generation via Claude Code. With Juice Shop running locally, Claude Code can open a browser, navigate the application, and generate test files that follow the project conventions.
+The project is configured with [Playwright MCP](.mcp.json) for AI-assisted browser interaction through an MCP-compatible coding client. With Juice Shop running locally, the client can open a browser, navigate the application, and help generate test files that follow the project conventions.
 
 ### CI Integration
 
@@ -608,13 +614,16 @@ Add new code in the layer that matches its purpose:
 - add a modal or banner helper to `src/modals`
 - add a new API area to `src/api/services`
 - add reusable data builders to `src/data`
+- add test-only infrastructure helpers to `tests/helpers`
 - add new reusable tags to `tests/attributes/tags.ts`
 - add tests to the matching suite under `tests`
 
 ## Validation
 
-Run TypeScript validation before pushing major framework changes:
+Run the complete static validation before committing framework changes:
 
 ```bash
-npx tsc --noEmit
+npm run validate
 ```
+
+This command runs TypeScript type checking, ESLint, and the Prettier formatting check.

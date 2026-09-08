@@ -1,6 +1,7 @@
 import { qase } from "playwright-qase-reporter";
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
+import { BrowserDialogMonitor } from "../helpers/BrowserDialogMonitor";
 
 test.describe("Input Validation", () => {
   test(
@@ -29,7 +30,7 @@ test.describe("Input Validation", () => {
           `but received ${response.status()} ${response.statusText()}.`,
           `Response body: ${rawBody}`,
         ].join(" "),
-      ).toBeLessThan(500);
+      ).toBe(200);
 
       expect(rawBody).not.toContain(payload);
     },
@@ -48,14 +49,7 @@ test.describe("Input Validation", () => {
     },
     async ({ page, pages }) => {
       const payload = `<img src=x onerror=alert('xss')>`;
-      let dialogTriggered = false;
-      let dialogMessage = "";
-
-      page.on("dialog", async (dialog) => {
-        dialogTriggered = true;
-        dialogMessage = dialog.message();
-        await dialog.dismiss();
-      });
+      const dialogMonitor = new BrowserDialogMonitor(page);
 
       await pages.homePage.open();
       await pages.homePage.expectLoaded();
@@ -67,19 +61,28 @@ test.describe("Input Validation", () => {
         );
       });
 
-      await pages.homePage.navbar.search(payload);
-      await searchResponsePromise;
-      await pages.homePage.expectNoResultsFound();
+      const {
+        result: searchResponse,
+        dialog: dialogEvidence,
+        wasDialogTriggered,
+      } = await dialogMonitor.observe(async () => {
+        await pages.homePage.navbar.search(payload);
+        const searchResponse = await searchResponsePromise;
+        await pages.homePage.waitForSearchResultsRendered();
+        return searchResponse;
+      });
+
+      expect(searchResponse.status()).toBe(200);
 
       const dialogErrorMessage = [
-        "Expected no browser dialog to be displayed after submitting the XSS payload,",
-        "but a dialog was triggered.",
-        dialogMessage ? `Dialog message: "${dialogMessage}".` : "",
-      ]
-        .filter(Boolean)
-        .join(" ");
+        "XSS vulnerability detected:",
+        "the search payload executed JavaScript and opened a browser dialog.",
+        `Payload: ${payload}`,
+        `Dialog type: ${dialogEvidence?.type}`,
+        `Dialog message: "${dialogEvidence?.message}".`,
+      ].join(" ");
 
-      expect(dialogTriggered, dialogErrorMessage).toBeFalsy();
+      expect(wasDialogTriggered, dialogErrorMessage).toBe(false);
     },
   );
 });
