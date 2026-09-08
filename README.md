@@ -56,6 +56,7 @@ The repository is organized into framework code and test suites.
 - [tests/api](tests/api) API test suite
 - [tests/security](tests/security) security-focused test suite
 - [tests/attributes](tests/attributes) shared test metadata such as tags
+- [tests/helpers](tests/helpers) reusable test-only helpers such as browser dialog monitoring
 - [tests/fixtures.ts](tests/fixtures.ts) custom Playwright fixtures exposed to tests
 
 ### Key framework files
@@ -65,7 +66,7 @@ The repository is organized into framework code and test suites.
 - [src/utils/step.ts](src/utils/step.ts) decorator for wrapping methods with `test.step`
 - [tests/attributes/tags.ts](tests/attributes/tags.ts) central storage for reusable test tags
 - [docker-compose.yml](docker-compose.yml) local Juice Shop container setup
-- [.mcp.json](.mcp.json) Playwright MCP server configuration for Claude Code
+- [.mcp.json](.mcp.json) Playwright MCP server configuration for compatible coding clients
 
 ## Local setup
 
@@ -190,6 +191,8 @@ Security-oriented scenarios check common vulnerable areas in Juice Shop:
 
 - [tests/security/basket.security.spec.ts](tests/security/basket.security.spec.ts) broken access control and IDOR checks around basket access and basket modification
 - [tests/security/xss.security.spec.ts](tests/security/xss.security.spec.ts) reflected payload handling in search API responses and script execution attempts in UI search
+
+The UI XSS scenario uses [tests/helpers/BrowserDialogMonitor.ts](tests/helpers/BrowserDialogMonitor.ts) to keep dialog observation active through search rendering, capture alert evidence, and dismiss blocking browser dialogs safely.
 
 The suite is organized with reusable tags from [tests/attributes/tags.ts](tests/attributes/tags.ts), which makes it possible to run smoke, auth, search, basket, UI, API, and security-focused subsets in local runs and in GitHub Actions.
 
@@ -611,6 +614,7 @@ Add new code in the layer that matches its purpose:
 - add a modal or banner helper to `src/modals`
 - add a new API area to `src/api/services`
 - add reusable data builders to `src/data`
+- add test-only infrastructure helpers to `tests/helpers`
 - add new reusable tags to `tests/attributes/tags.ts`
 - add tests to the matching suite under `tests`
 
