@@ -2,7 +2,7 @@ import { qase } from "playwright-qase-reporter";
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 import { createTestUser } from "@src/data/factories/userFactory";
-import { orderHistoryResponseSchema } from "@src/api/schemas/api.schemas";
+import { orderHistoryResponseSchema } from "@src/api/schemas/order.schemas";
 import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Order API", () => {

@@ -1,18 +1,13 @@
-import { APIRequestContext } from "@playwright/test";
 import { ApiClient } from "../clients/ApiClient";
 import {
   CreateFeedbackRequest,
   CaptchaResponse,
 } from "../types/feedback.types";
 import { step } from "@src/utils/step";
-import { captchaSchema } from "../schemas/api.schemas";
+import { captchaSchema } from "../schemas/feedback.schemas";
 import { parseApiResponse } from "../schemas/parseApiResponse";
 
 export class FeedbackService extends ApiClient {
-  constructor(request: APIRequestContext) {
-    super(request);
-  }
-
   @step("Request CAPTCHA challenge for feedback form")
   async getCaptcha(token: string): Promise<CaptchaResponse> {
     const response = await this.get("/rest/captcha/", {

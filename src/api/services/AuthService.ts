@@ -1,18 +1,15 @@
-import { APIRequestContext } from "@playwright/test";
 import { ApiClient } from "../clients/ApiClient";
 import { createTestUser, type TestUser } from "@src/data/factories/userFactory";
 import { step } from "@src/utils/step";
-import { loginResponseSchema } from "../schemas/api.schemas";
+import {
+  loginResponseSchema,
+  userResponseSchema,
+} from "../schemas/auth.schemas";
 import { parseApiResponse } from "../schemas/parseApiResponse";
-import { userResponseSchema } from "../schemas/api.schemas";
 import { env } from "@src/utils/env";
 
 export class AuthService extends ApiClient {
   private readonly createdUserIds = new Set<number>();
-
-  constructor(request: APIRequestContext) {
-    super(request);
-  }
 
   @step((user: TestUser) => `Attempt to register user: ${user.email}`)
   async register(user: TestUser) {

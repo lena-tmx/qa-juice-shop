@@ -2,17 +2,21 @@ import { expect, Locator, Page } from "@playwright/test";
 import { BasePage } from "./BasePage";
 import { Navbar } from "../components/Navbar";
 import { step } from "@src/utils/step";
+import { ProductDetailsModal } from "@src/modals/ProductDetailsModal";
 
 export class HomePage extends BasePage {
   readonly navbar: Navbar;
   readonly pageTitle: Locator;
   readonly itemName: Locator;
 
+  readonly productDetailsModal: ProductDetailsModal;
+
   constructor(page: Page) {
     super(page);
     this.navbar = new Navbar(page);
     this.pageTitle = page.locator("body");
     this.itemName = page.locator(".info-box .name");
+    this.productDetailsModal = new ProductDetailsModal(page);
   }
 
   @step("Open home page")
@@ -37,10 +41,6 @@ export class HomePage extends BasePage {
   async expectNoResultsFound(): Promise<void> {
     await this.dismissBlockingBanners();
     await expect(this.page.getByText(/no results found/i)).toBeVisible();
-  }
-
-  private productCard(productName: string): Locator {
-    return this.page.locator("mat-card").filter({ hasText: productName });
   }
 
   @step((productName: string) => `Add product to basket: ${productName}`)
@@ -73,5 +73,24 @@ export class HomePage extends BasePage {
     await expect(
       this.page.locator(".mat-mdc-snack-bar-label.mdc-snackbar__label"),
     ).toBeVisible();
+  }
+
+  @step(
+    (productName: string) =>
+      `Open product details page for product: ${productName}`,
+  )
+  async openProductDetails(productName: string): Promise<void> {
+    await this.dismissBlockingBanners();
+    const card = this.productCard(productName);
+    const productTitle = card.getByText(productName, { exact: true });
+
+    await expect(productTitle).toBeVisible();
+    await productTitle.click();
+
+    await this.productDetailsModal.expectOpened();
+  }
+
+  private productCard(productName: string): Locator {
+    return this.page.locator("mat-card").filter({ hasText: productName });
   }
 }

@@ -11,10 +11,10 @@ const tagsFilterPattern = env.tagsFilter.length
 
 export default defineConfig({
   testDir: "./tests",
-  fullyParallel: true,
+  fullyParallel: env.ci,
   grep: tagsFilterPattern,
   retries: 0,
-  workers: 2,
+  workers: env.ci ? 2 : 1,
   timeout: 120000,
   expect: {
     timeout: 30000,
@@ -23,7 +23,7 @@ export default defineConfig({
   use: {
     baseURL: env.baseUrl,
     actionTimeout: 30000,
-    headless: true,
+    headless: env.ci,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "retain-on-failure",

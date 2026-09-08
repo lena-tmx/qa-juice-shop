@@ -5,7 +5,7 @@ import { createTestUser } from "@src/data/factories/userFactory";
 import {
   basketItemResponseSchema,
   basketResponseSchema,
-} from "@src/api/schemas/api.schemas";
+} from "@src/api/schemas/basket.schemas";
 import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Basket CRUD API", () => {

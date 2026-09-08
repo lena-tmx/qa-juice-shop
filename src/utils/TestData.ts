@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker";
 
 export class TestData {
   static getUniqueEmail(): string {
-    return faker.internet.email({ provider: "qa-test.example" });
+    return `user-${faker.string.uuid()}@qa-test.example`;
   }
 
   static getFullName(): string {

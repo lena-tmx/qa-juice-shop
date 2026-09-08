@@ -1,13 +1,8 @@
-import { APIRequestContext } from "@playwright/test";
 import { ApiClient } from "../clients/ApiClient";
 import { CreateAddressRequest } from "../types/address.types";
 import { step } from "@src/utils/step";
 
 export class AddressService extends ApiClient {
-  constructor(request: APIRequestContext) {
-    super(request);
-  }
-
   @step("Retrieve saved delivery addresses")
   async getAll(token: string) {
     return this.get("/api/Addresss/", {

@@ -1,18 +1,13 @@
-import { APIRequestContext } from "@playwright/test";
 import { ApiClient } from "../clients/ApiClient";
 import {
   BasketItemResponse,
   AddBasketItemRequest,
 } from "../types/basket.types";
 import { step } from "@src/utils/step";
-import { basketItemsResponseSchema } from "../schemas/api.schemas";
+import { basketItemsResponseSchema } from "../schemas/basket.schemas";
 import { parseApiResponse } from "../schemas/parseApiResponse";
 
 export class BasketService extends ApiClient {
-  constructor(request: APIRequestContext) {
-    super(request);
-  }
-
   @step(
     (token: string | undefined, payload: AddBasketItemRequest) =>
       `Add product to basket (product id: ${payload.ProductId})`,

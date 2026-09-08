@@ -3,7 +3,7 @@ import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 import { createTestUser } from "@src/data/factories/userFactory";
 import { TestData } from "@src/utils/TestData";
-import { feedbackResponseSchema } from "@src/api/schemas/api.schemas";
+import { feedbackResponseSchema } from "@src/api/schemas/feedback.schemas";
 import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Feedback API", () => {

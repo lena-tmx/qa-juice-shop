@@ -5,7 +5,7 @@ export interface LoginRequest {
 
 export interface LoginAuthentication {
   token: string;
-  bid?: number;
+  bid: number;
   umail?: string;
 }
 
@@ -30,4 +30,21 @@ export interface RegisterUserPayload {
     question: string;
   };
   securityAnswer: string;
+}
+
+export interface User {
+  id: number;
+  email: string;
+}
+
+export interface UserResponse {
+  data: User;
+}
+
+export interface SecurityQuestionResponse {
+  question: string;
+}
+
+export interface SecurityQuestionsResponse {
+  data: SecurityQuestionResponse[];
 }
