@@ -167,6 +167,7 @@ UI scenarios validate critical end-user flows in the browser:
 - [tests/ui/registration.spec.ts](tests/ui/registration.spec.ts) successful registration and login with every supported security question
 - [tests/ui/search.spec.ts](tests/ui/search.spec.ts) product search and empty-state handling for missing results
 - [tests/ui/basket.spec.ts](tests/ui/basket.spec.ts) add-to-basket flow, basket visibility, item removal, and empty basket checks
+- [tests/ui/productDetails.spec.ts](tests/ui/productDetails.spec.ts) product details validation against API data and modal closing
 
 ### API tests
 
@@ -502,6 +503,8 @@ npm run allure:open
 
 - `allure-results` raw result files
 - `allure-report` generated HTML report with dashboard, suite breakdown, and failure details
+- `playwright-report` generated Playwright HTML report
+- `blob-report` intermediate CI shard reports used to build the merged report
 - `test-results` Playwright output artifacts
 
 ### Example Allure report views
@@ -516,7 +519,7 @@ CI and manual GitHub Actions runs can publish the generated HTML report to GitHu
 
 Current public Pages URL:
 
-- [qa-juice-shop GitHub Pages report](https://lenache-1234.github.io/qa-juice-shop/)
+- [qa-juice-shop GitHub Pages report](https://lena-tmx.github.io/qa-juice-shop/)
 
 Where to find the published report link after a run:
 
@@ -566,7 +569,7 @@ Reports are saved to `reports/coverage/`. The `coverage:slack` command outputs a
 
 ### Playwright MCP
 
-The project is configured with [Playwright MCP](.mcp.json) for AI-assisted test generation via Claude Code. With Juice Shop running locally, Claude Code can open a browser, navigate the application, and generate test files that follow the project conventions.
+The project is configured with [Playwright MCP](.mcp.json) for AI-assisted browser interaction through an MCP-compatible coding client. With Juice Shop running locally, the client can open a browser, navigate the application, and help generate test files that follow the project conventions.
 
 ### CI Integration
 
@@ -613,8 +616,10 @@ Add new code in the layer that matches its purpose:
 
 ## Validation
 
-Run TypeScript validation before pushing major framework changes:
+Run the complete static validation before committing framework changes:
 
 ```bash
-npx tsc --noEmit
+npm run validate
 ```
+
+This command runs TypeScript type checking, ESLint, and the Prettier formatting check.
