@@ -163,6 +163,7 @@ The project currently includes three main groups of automated tests.
 UI scenarios validate critical end-user flows in the browser:
 
 - [tests/ui/login.spec.ts](tests/ui/login.spec.ts) login with a valid user and successful logout
+- [tests/ui/registration.spec.ts](tests/ui/registration.spec.ts) successful registration and login with every supported security question
 - [tests/ui/search.spec.ts](tests/ui/search.spec.ts) product search and empty-state handling for missing results
 - [tests/ui/basket.spec.ts](tests/ui/basket.spec.ts) add-to-basket flow, basket visibility, item removal, and empty basket checks
 
@@ -442,7 +443,7 @@ Test data helpers and factories live in [src/data](src/data). The project uses `
 
 Available factories:
 
-- `createTestUser()` — user with unique email, password, and random security question
+- `createTestUser()` — user with unique email, password, and a random question selected from every security question supported by the application; pass `securityQuestion` to test a specific question
 - `createTestAddress()` — address with random name, street, city, country
 - `createTestCard()` — payment card with valid number and future expiry
 

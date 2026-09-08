@@ -29,7 +29,7 @@ export const SecurityQuestions = {
   },
   DENTIST_LAST_NAME: {
     id: 8,
-    text: "Last name of dentist when you were a teenager?",
+    text: "Last name of dentist when you were a teenager? (Do not include 'Dr.')",
   },
   TEENAGER_ZIP_CODE: {
     id: 9,
@@ -37,7 +37,7 @@ export const SecurityQuestions = {
   },
   FIRST_COMPANY: {
     id: 10,
-    text: "Company you first worked for as an adult?",
+    text: "Company you first work for as an adult?",
   },
   FAVORITE_BOOK: {
     id: 11,
