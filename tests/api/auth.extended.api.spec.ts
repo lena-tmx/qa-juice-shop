@@ -5,7 +5,7 @@ import { createTestUser } from "@src/data/factories/userFactory";
 import {
   securityQuestionsResponseSchema,
   userResponseSchema,
-} from "@src/api/schemas/api.schemas";
+} from "@src/api/schemas/auth.schemas";
 import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Auth Extended API", () => {

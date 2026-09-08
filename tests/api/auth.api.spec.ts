@@ -1,7 +1,7 @@
 import { qase } from "playwright-qase-reporter";
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
-import { loginResponseSchema } from "@src/api/schemas/api.schemas";
+import { loginResponseSchema } from "@src/api/schemas/auth.schemas";
 import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Auth API", () => {

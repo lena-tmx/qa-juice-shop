@@ -2,7 +2,7 @@ import { qase } from "playwright-qase-reporter";
 import { expect, test } from "../fixtures";
 import { createTestUser } from "@src/data/factories/userFactory";
 import { Tags } from "../attributes/tags";
-import { basketItemResponseSchema } from "@src/api/schemas/api.schemas";
+import { basketItemResponseSchema } from "@src/api/schemas/basket.schemas";
 import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Basket API", () => {

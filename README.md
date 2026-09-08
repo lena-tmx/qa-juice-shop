@@ -46,7 +46,8 @@ The repository is organized into framework code and test suites.
 - [src/modals](src/modals) modal and banner objects
 - [src/api/clients](src/api/clients) low-level API client logic
 - [src/api/services](src/api/services) high-level domain API services
-- [src/api/schemas](src/api/schemas) runtime validation schemas for API responses
+- [src/api/types](src/api/types) compile-time request and response contracts grouped by domain
+- [src/api/schemas](src/api/schemas) AJV runtime response schemas grouped by domain
 - [src/data](src/data) test data and data factories
 - [src/utils](src/utils) framework utilities such as environment parsing and step decorators
 - [src/agents/analyzer](src/agents/analyzer) test result analyzer with flaky detection
@@ -276,32 +277,29 @@ API tests should use domain services from [src/api/services](src/api/services) i
 
 1. Use the `api` fixture
 2. Call the service method that matches the business action
-3. Parse or validate the response in the test
+3. Check the HTTP status and validate successful response data with the matching domain schema
 4. Use test data factories when a user or payload must be generated
 
 ### Example API test
 
 ```typescript
 import { test, expect } from "../fixtures";
-import { createTestUser } from "@src/data/factories/userFactory";
+import { productResponseSchema } from "@src/api/schemas/products.schemas";
+import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 import { Tags } from "../attributes/tags";
 
 test(
-  "should add item to basket for authorized user",
+  "should return product by id",
   {
-    tag: [Tags.TEST_TYPE.API, Tags.FEATURE.BASKET, Tags.SCENARIO.POSITIVE],
+    tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PRODUCTS, Tags.SCENARIO.POSITIVE],
   },
   async ({ api }) => {
-    const user = createTestUser();
-    const login = await api.auth.registerAndLogin(user);
+    const response = await api.products.getById(1);
 
-    const response = await api.basket.addItem(login.token, {
-      ProductId: 1,
-      BasketId: login.basketId,
-      quantity: 1,
-    });
+    expect(response.status()).toBe(200);
 
-    expect([200, 201]).toContain(response.status());
+    const body = await parseApiResponse(response, productResponseSchema);
+    expect(body.data.id).toBe(1);
   },
 );
 ```
@@ -322,12 +320,23 @@ Page objects live in [src/pages](src/pages). Shared UI parts live in [src/compon
 
 API services live in [src/api/services](src/api/services). They wrap the lower-level HTTP client and expose domain-level operations.
 
+Each API domain keeps its responsibilities separate:
+
+- `services/ProductsService.ts` owns product endpoint paths and request execution
+- `types/products.types.ts` describes request and response data for TypeScript
+- `schemas/products.schemas.ts` validates real response JSON at runtime with AJV
+- `tests/api/products*.spec.ts` owns scenarios, status checks, and business assertions
+
+The shared [src/api/clients/ApiClient.ts](src/api/clients/ApiClient.ts) wraps Playwright's `APIRequestContext`. It provides `get`, `post`, `put`, and `delete`, attaches sanitized request/response details to every configured reporter, and is inherited by all domain services. The shared [src/api/schemas/parseApiResponse.ts](src/api/schemas/parseApiResponse.ts) compiles and caches AJV validators and returns typed data only after validation succeeds.
+
 ### Good practices
 
 - keep endpoint details in services, not in tests
 - expose helper methods such as `registerAndLogin` when they simplify common flows
 - throw meaningful errors from service helpers when a response is unexpected
 - share low-level request handling through a base API client
+- keep TypeScript types and AJV schemas in matching domain files
+- keep status and business assertions in tests so negative responses remain accessible
 
 ## Using `@step`
 

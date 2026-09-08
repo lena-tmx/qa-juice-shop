@@ -1,12 +1,7 @@
-import { APIRequestContext } from "@playwright/test";
 import { ApiClient } from "../clients/ApiClient";
 import { step } from "@src/utils/step";
 
 export class ProductsService extends ApiClient {
-  constructor(request: APIRequestContext) {
-    super(request);
-  }
-
   @step("Browse product catalog")
   async getAll() {
     return this.get("/api/Products");

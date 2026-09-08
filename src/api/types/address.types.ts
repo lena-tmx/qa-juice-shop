@@ -21,3 +21,11 @@ export interface AddressResponse {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface AddressApiResponse {
+  data: AddressResponse;
+}
+
+export interface AddressListResponse {
+  data: AddressResponse[];
+}

@@ -15,3 +15,11 @@ export interface CardResponse {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface CardApiResponse {
+  data: CardResponse;
+}
+
+export interface CardListResponse {
+  data: CardResponse[];
+}

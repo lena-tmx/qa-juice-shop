@@ -6,7 +6,7 @@ import { createTestAddress } from "@src/data/factories/addressFactory";
 import {
   addressListResponseSchema,
   addressResponseSchema,
-} from "@src/api/schemas/api.schemas";
+} from "@src/api/schemas/address.schemas";
 import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Address API", () => {

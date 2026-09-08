@@ -6,7 +6,7 @@ import { createTestCard } from "@src/data/factories/cardFactory";
 import {
   cardListResponseSchema,
   cardResponseSchema,
-} from "@src/api/schemas/api.schemas";
+} from "@src/api/schemas/card.schemas";
 import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Card API", () => {
