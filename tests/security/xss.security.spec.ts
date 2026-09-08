@@ -67,7 +67,9 @@ test.describe("Input Validation", () => {
         wasDialogTriggered,
       } = await dialogMonitor.observe(async () => {
         await pages.homePage.navbar.search(payload);
-        return searchResponsePromise;
+        const searchResponse = await searchResponsePromise;
+        await pages.homePage.waitForSearchResultsRendered();
+        return searchResponse;
       });
 
       expect(searchResponse.status()).toBe(200);
