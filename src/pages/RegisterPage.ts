@@ -49,15 +49,7 @@ export class RegisterPage extends BasePage {
       user.password,
     );
 
-    await this.clickAfterDismissingBanners(
-      this.securityQuestionSelect.locator(".mat-mdc-select-arrow-wrapper"),
-    );
-    await this.page
-      .getByRole("option", {
-        name: user.securityQuestion.text,
-        exact: true,
-      })
-      .click();
+    await this.selectSecurityQuestion(user.securityQuestion.text);
 
     await this.fillAfterDismissingBanners(
       this.securityAnswerInput,
@@ -81,5 +73,17 @@ export class RegisterPage extends BasePage {
   @step("Verify registration completed successfully")
   async expectRegistrationSucceeded(): Promise<void> {
     await expect(this.page).toHaveURL(/\/#\/login/);
+  }
+
+  private async selectSecurityQuestion(question: string): Promise<void> {
+    await this.clickAfterDismissingBanners(
+      this.securityQuestionSelect.locator(".mat-mdc-select-arrow-wrapper"),
+    );
+    await this.page
+      .getByRole("option", {
+        name: question,
+        exact: true,
+      })
+      .click();
   }
 }
