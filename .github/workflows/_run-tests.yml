@@ -556,7 +556,10 @@ jobs:
             echo "" >> analysis-message.txt
             echo "Merged test report is unavailable." >> analysis-message.txt
           fi
-          npx tsx src/agents/coverage/collectCoverage.ts --slack "" coverage-message.txt
+          npx tsx src/agents/coverage/collectCoverage.ts \
+            --report test-report.json \
+            --slack \
+            --output coverage-message.txt
           {
             echo 'analysis-message<<EOF'
             cat analysis-message.txt

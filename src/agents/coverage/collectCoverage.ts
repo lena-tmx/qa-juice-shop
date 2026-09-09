@@ -1,5 +1,12 @@
 import * as fs from "fs";
 import * as path from "path";
+import ts from "typescript";
+
+interface TestMetadata {
+  title: string;
+  file: string;
+  tags: string[];
+}
 
 interface FeatureCoverage {
   feature: string;
@@ -30,6 +37,7 @@ interface CoverageReport {
   routeCoverage: RouteCoverage[];
   apiCoverage: ApiCoverage[];
   uncoveredFeatures: string[];
+  testsByType: Record<string, number>;
   summary: {
     totalTests: number;
     totalFeatures: number;
@@ -118,44 +126,119 @@ function extractTagValue(tag: string): string {
   return tag.replace(/^@/, "").toLowerCase();
 }
 
-function parseTestFiles(testsDir: string): Array<{
-  title: string;
-  file: string;
-  tags: string[];
-}> {
-  const tests: Array<{ title: string; file: string; tags: string[] }> = [];
+function parseTestFiles(testsDir: string): TestMetadata[] {
+  const tests: TestMetadata[] = [];
   const files = findSpecFiles(testsDir);
 
   for (const file of files) {
     const content = fs.readFileSync(file, "utf-8");
     const relativePath = path.relative(process.cwd(), file);
+    const sourceFile = ts.createSourceFile(
+      file,
+      content,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TS,
+    );
 
-    const testBlocks =
-      content.match(
-        /test\(\s*\n?\s*["'`](.*?)["'`],?\s*\n?\s*\{[^}]*tag:\s*\[(.*?)\]/gs,
-      ) || [];
-
-    for (const block of testBlocks) {
-      const titleMatch = block.match(/test\(\s*\n?\s*["'`](.*?)["'`]/);
-      const tagsMatch = block.match(/tag:\s*\[(.*?)\]/s);
-
-      if (titleMatch && tagsMatch) {
-        const title = titleMatch[1];
-        const tagsStr = tagsMatch[1];
-        const tags =
-          tagsStr.match(/Tags\.\w+\.\w+/g)?.map((t) => {
-            const parts = t.split(".");
-            const group = parts[1];
-            const value = parts[2];
-            return resolveTag(group, value);
-          }) || [];
-
-        tests.push({ title, file: relativePath, tags });
+    const visit = (node: ts.Node): void => {
+      if (
+        ts.isCallExpression(node) &&
+        ts.isIdentifier(node.expression) &&
+        node.expression.text === "test"
+      ) {
+        const title = extractTestTitle(node.arguments[0], sourceFile);
+        const options = node.arguments[1];
+        if (title && options) {
+          tests.push({
+            title,
+            file: relativePath,
+            tags: extractTags(options.getText(sourceFile)),
+          });
+        }
       }
-    }
+      ts.forEachChild(node, visit);
+    };
+
+    visit(sourceFile);
   }
 
   return tests;
+}
+
+function extractTestTitle(
+  titleArgument: ts.Expression | undefined,
+  sourceFile: ts.SourceFile,
+): string | undefined {
+  if (!titleArgument) return undefined;
+
+  if (ts.isCallExpression(titleArgument)) {
+    const isQaseCall =
+      ts.isIdentifier(titleArgument.expression) &&
+      titleArgument.expression.text === "qase";
+    return isQaseCall
+      ? extractTestTitle(titleArgument.arguments[1], sourceFile)
+      : undefined;
+  }
+
+  if (
+    ts.isStringLiteral(titleArgument) ||
+    ts.isNoSubstitutionTemplateLiteral(titleArgument)
+  ) {
+    return titleArgument.text;
+  }
+
+  if (ts.isTemplateExpression(titleArgument)) {
+    return titleArgument
+      .getText(sourceFile)
+      .slice(1, -1)
+      .replace(/\$\{[^}]+\}/g, "{parameter}");
+  }
+
+  return undefined;
+}
+
+function extractTags(source: string): string[] {
+  return (
+    source.match(/Tags\.\w+\.\w+/g)?.map((tag) => {
+      const [, group, value] = tag.split(".");
+      return resolveTag(group, value);
+    }) || []
+  );
+}
+
+function parseJsonReport(reportPath: string): TestMetadata[] {
+  const report = JSON.parse(fs.readFileSync(reportPath, "utf-8")) as {
+    suites?: JsonSuite[];
+  };
+  const tests = new Map<string, TestMetadata>();
+
+  const visitSuite = (suite: JsonSuite): void => {
+    for (const spec of suite.specs || []) {
+      const title = spec.title.replace(/\s+\(Qase ID: \d+\)$/, "");
+      const file = spec.file || suite.file || "unknown";
+      const key = `${file}:${title}`;
+      if (!tests.has(key)) {
+        tests.set(key, {
+          title,
+          file: file.startsWith("tests/") ? file : path.join("tests", file),
+          tags: (spec.tags || []).map((tag) =>
+            tag.startsWith("@") ? tag : `@${tag}`,
+          ),
+        });
+      }
+    }
+    for (const child of suite.suites || []) visitSuite(child);
+  };
+
+  for (const suite of report.suites || []) visitSuite(suite);
+  return [...tests.values()];
+}
+
+interface JsonSuite {
+  file?: string;
+  specs?: Array<{ title: string; file?: string; tags?: string[] }>;
+  suites?: JsonSuite[];
 }
 
 function resolveTag(group: string, value: string): string {
@@ -271,13 +354,11 @@ function buildFeatureMatrix(
   tests: Array<{ title: string; file: string; tags: string[] }>,
 ): FeatureCoverage[] {
   const featureMap = new Map<string, FeatureCoverage>();
+  const knownFeatures = new Set(KNOWN_FEATURES);
 
   for (const test of tests) {
-    const featureTags = test.tags.filter(
-      (t) =>
-        !["@ui", "@api", "@security", "@smoke", "@regression"].includes(t) &&
-        !["@positive", "@negative"].includes(t) &&
-        !["@critical"].includes(t),
+    const featureTags = test.tags.filter((tag) =>
+      knownFeatures.has(extractTagValue(tag)),
     );
 
     const typeTags = test.tags.filter((t) =>
@@ -304,6 +385,18 @@ function buildFeatureMatrix(
   return [...featureMap.values()].sort((a, b) =>
     a.feature.localeCompare(b.feature),
   );
+}
+
+function countTestsByType(tests: TestMetadata[]): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const test of tests) {
+    for (const type of ["ui", "api", "security"]) {
+      if (test.tags.includes(`@${type}`)) {
+        counts[type] = (counts[type] || 0) + 1;
+      }
+    }
+  }
+  return counts;
 }
 
 function formatReport(report: CoverageReport): string {
@@ -417,19 +510,16 @@ function formatSlackSummary(report: CoverageReport): string {
     `:bar_chart: *Features:* ${report.summary.coveredFeatures}/${report.summary.totalFeatures} (${pct}%) | ${report.summary.totalTests} tests`,
   );
 
-  const byType = new Map<string, number>();
-  for (const feature of report.featureMatrix) {
-    for (const t of feature.tests) {
-      for (const type of t.types) {
-        byType.set(type, (byType.get(type) || 0) + 1);
-      }
-    }
+  const executionParts = ["api", "ui"]
+    .filter((type) => report.testsByType[type])
+    .map((type) => `${type}: ${report.testsByType[type]}`);
+  if (executionParts.length > 0) {
+    lines.push(
+      `:test_tube: *By execution layer:* ${executionParts.join(" | ")}`,
+    );
   }
-  const typeParts = Array.from(byType.entries())
-    .sort((a, b) => b[1] - a[1])
-    .map(([type, count]) => `${type}: ${count}`);
-  if (typeParts.length > 0) {
-    lines.push(`:test_tube: *By type:* ${typeParts.join(" | ")}`);
+  if (report.testsByType.security) {
+    lines.push(`:shield: *Security checks:* ${report.testsByType.security}`);
   }
 
   if (report.uncoveredFeatures.length > 0) {
@@ -447,15 +537,31 @@ function formatSlackSummary(report: CoverageReport): string {
 // Main
 const args = process.argv.slice(2);
 const slackMode = args.includes("--slack");
-const filteredArgs = args.filter((a) => a !== "--slack");
+
+function optionValue(name: string): string | undefined {
+  const index = args.indexOf(name);
+  return index >= 0 ? args[index + 1] : undefined;
+}
+
+const positionalArgs = args.filter(
+  (argument, index) =>
+    argument !== "--slack" &&
+    !["--report", "--har", "--output"].includes(argument) &&
+    !["--report", "--har", "--output"].includes(args[index - 1]),
+);
 
 const testsDir = path.resolve(process.cwd(), "tests");
-const harPath = filteredArgs[0] || "";
+const reportPath = optionValue("--report");
+const harPath = optionValue("--har") || positionalArgs[0] || "";
 const outputPath =
-  filteredArgs[1] ||
+  optionValue("--output") ||
+  positionalArgs[1] ||
   (slackMode ? "coverage-message.txt" : "reports/coverage/coverage-report.md");
 
-const tests = parseTestFiles(testsDir);
+const tests =
+  reportPath && fs.existsSync(reportPath)
+    ? parseJsonReport(reportPath)
+    : parseTestFiles(testsDir);
 const featureMatrix = buildFeatureMatrix(tests);
 const coveredFeatures = new Set(featureMatrix.map((f) => f.feature));
 const uncoveredFeatures = KNOWN_FEATURES.filter((f) => !coveredFeatures.has(f));
@@ -475,6 +581,7 @@ const report: CoverageReport = {
   routeCoverage,
   apiCoverage,
   uncoveredFeatures,
+  testsByType: countTestsByType(tests),
   summary: {
     totalTests: tests.length,
     totalFeatures: KNOWN_FEATURES.length,
