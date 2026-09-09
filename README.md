@@ -558,6 +558,9 @@ Reads `test-report.json` (generated automatically in CI) and outputs a formatted
 ### Coverage Tracker
 
 Generates a coverage report based on feature tags, visited routes (from HAR), and API endpoints.
+CI reads the merged Playwright JSON report, including Qase-wrapped and parameterized tests,
+and counts a browser-independent test case only once across Playwright projects. Local runs
+without a JSON report discover test definitions through the TypeScript syntax tree.
 
 ```bash
 npm run coverage
