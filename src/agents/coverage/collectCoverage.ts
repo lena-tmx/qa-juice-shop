@@ -65,7 +65,18 @@ const KNOWN_FEATURES = [
   "order-history",
   "recycling",
   "deluxe",
+  "xss",
+  "idor",
+  "sql-injection",
+  "session",
+  "headers",
+  "access-control",
+  "input-validation",
 ];
+
+const FEATURE_ALIASES: Record<string, string> = {
+  admin: "administration",
+};
 
 const KNOWN_API_ENDPOINTS = [
   { method: "POST", endpoint: "/api/Users" },
@@ -124,6 +135,11 @@ const KNOWN_ROUTES = [
 
 function extractTagValue(tag: string): string {
   return tag.replace(/^@/, "").toLowerCase();
+}
+
+function normalizeFeatureTag(tag: string): string {
+  const value = extractTagValue(tag);
+  return FEATURE_ALIASES[value] || value;
 }
 
 function parseTestFiles(testsDir: string): TestMetadata[] {
@@ -357,9 +373,9 @@ function buildFeatureMatrix(
   const knownFeatures = new Set(KNOWN_FEATURES);
 
   for (const test of tests) {
-    const featureTags = test.tags.filter((tag) =>
-      knownFeatures.has(extractTagValue(tag)),
-    );
+    const featureTags = test.tags
+      .map(normalizeFeatureTag)
+      .filter((feature) => knownFeatures.has(feature));
 
     const typeTags = test.tags.filter((t) =>
       ["@ui", "@api", "@security"].includes(t),
@@ -368,8 +384,7 @@ function buildFeatureMatrix(
       ["@positive", "@negative"].includes(t),
     );
 
-    for (const tag of featureTags) {
-      const feature = extractTagValue(tag);
+    for (const feature of featureTags) {
       if (!featureMap.has(feature)) {
         featureMap.set(feature, { feature, tests: [] });
       }
@@ -558,10 +573,13 @@ const outputPath =
   positionalArgs[1] ||
   (slackMode ? "coverage-message.txt" : "reports/coverage/coverage-report.md");
 
-const tests =
-  reportPath && fs.existsSync(reportPath)
-    ? parseJsonReport(reportPath)
-    : parseTestFiles(testsDir);
+if (reportPath && !fs.existsSync(reportPath)) {
+  throw new Error(`Requested Playwright report does not exist: ${reportPath}`);
+}
+
+const tests = reportPath
+  ? parseJsonReport(reportPath)
+  : parseTestFiles(testsDir);
 const featureMatrix = buildFeatureMatrix(tests);
 const coveredFeatures = new Set(featureMatrix.map((f) => f.feature));
 const uncoveredFeatures = KNOWN_FEATURES.filter((f) => !coveredFeatures.has(f));

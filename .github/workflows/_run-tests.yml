@@ -551,15 +551,18 @@ jobs:
         run: |
           if [ -f test-report.json ]; then
             npx tsx src/agents/analyzer/analyzeResults.ts test-report.json analysis-message.txt
+            npx tsx src/agents/coverage/collectCoverage.ts \
+              --report test-report.json \
+              --slack \
+              --output coverage-message.txt
           else
             echo ":mag: *Test Analysis*" > analysis-message.txt
             echo "" >> analysis-message.txt
             echo "Merged test report is unavailable." >> analysis-message.txt
+            echo ":warning: *Test Coverage*" > coverage-message.txt
+            echo "" >> coverage-message.txt
+            echo "Coverage is unavailable because the merged Playwright report is missing." >> coverage-message.txt
           fi
-          npx tsx src/agents/coverage/collectCoverage.ts \
-            --report test-report.json \
-            --slack \
-            --output coverage-message.txt
           {
             echo 'analysis-message<<EOF'
             cat analysis-message.txt
