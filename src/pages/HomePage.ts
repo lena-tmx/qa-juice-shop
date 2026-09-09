@@ -1,4 +1,4 @@
-import { expect, Locator, Page } from "@playwright/test";
+import { expect, Locator, Page, Response } from "@playwright/test";
 import { BasePage } from "./BasePage";
 import { Navbar } from "../components/Navbar";
 import { step } from "@src/utils/step";
@@ -6,15 +6,12 @@ import { ProductDetailsModal } from "@src/modals/ProductDetailsModal";
 
 export class HomePage extends BasePage {
   readonly navbar: Navbar;
-  readonly pageTitle: Locator;
-  readonly itemName: Locator;
-
   readonly productDetailsModal: ProductDetailsModal;
+  private readonly itemName: Locator;
 
   constructor(page: Page) {
     super(page);
     this.navbar = new Navbar(page);
-    this.pageTitle = page.locator("body");
     this.itemName = page.locator(".info-box .name");
     this.productDetailsModal = new ProductDetailsModal(page);
   }
@@ -54,32 +51,19 @@ export class HomePage extends BasePage {
   async addProductToBasket(productName: string): Promise<void> {
     await this.dismissBlockingBanners();
 
-    const card = this.productCard(productName);
-    await expect(card).toBeVisible();
-
-    const addButton = card.locator("button").filter({
-      hasText: /add to basket/i,
-    });
+    const addButton = this.addToBasketButton(productName);
     await expect(addButton).toBeVisible();
-    await this.dismissBlockingBanners();
 
-    const addToBasketResponsePromise = this.page.waitForResponse((response) => {
-      return (
-        response.url().includes("/api/BasketItems") &&
-        response.request().method() === "POST"
-      );
-    });
-
-    await addButton.click();
-    const response = await addToBasketResponsePromise;
+    const [response] = await Promise.all([
+      this.waitForAddToBasketResponse(),
+      this.clickAfterDismissingBanners(addButton),
+    ]);
 
     expect(
       response.status(),
       `Expected add-to-basket request to succeed, but got ${response.status()}`,
     ).toBe(200);
-    await expect(
-      this.page.locator(".mat-mdc-snack-bar-label.mdc-snackbar__label"),
-    ).toBeVisible();
+    await expect(this.basketNotification(productName)).toBeVisible();
   }
 
   @step(
@@ -99,5 +83,27 @@ export class HomePage extends BasePage {
 
   private productCard(productName: string): Locator {
     return this.page.locator("mat-card").filter({ hasText: productName });
+  }
+
+  private addToBasketButton(productName: string): Locator {
+    return this.productCard(productName)
+      .getByRole("button")
+      .filter({ hasText: /add to basket/i });
+  }
+
+  private basketNotification(productName: string): Locator {
+    return this.page
+      .locator(".mat-mdc-snack-bar-label.mdc-snackbar__label")
+      .filter({ hasText: productName })
+      .filter({ hasText: /into basket/i });
+  }
+
+  private waitForAddToBasketResponse(): Promise<Response> {
+    return this.page.waitForResponse((response) => {
+      return (
+        response.url().includes("/api/BasketItems") &&
+        response.request().method() === "POST"
+      );
+    });
   }
 }

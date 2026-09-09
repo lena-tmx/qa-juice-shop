@@ -1,3 +1,3 @@
 export interface OrderHistoryResponse {
-  data: object[];
+  data: Record<string, unknown>[];
 }

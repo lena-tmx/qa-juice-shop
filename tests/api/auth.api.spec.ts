@@ -1,12 +1,10 @@
 import { qase } from "playwright-qase-reporter";
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
-import { loginResponseSchema } from "@src/api/schemas/auth.schemas";
-import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Auth API", () => {
   test(
-    qase(4, "should login existing user"),
+    qase(4, "Login succeeds with valid credentials"),
     {
       tag: [
         Tags.TEST_TYPE.API,
@@ -16,31 +14,26 @@ test.describe("Auth API", () => {
       ],
     },
     async ({ api, registeredUser }) => {
-      const response = await api.auth.login(
+      const auth = await api.auth.login(
         registeredUser.email,
         registeredUser.password,
       );
 
-      expect(response.status()).toBe(200);
-
-      const body = await parseApiResponse(response, loginResponseSchema);
-      expect(body.token ?? body.authentication.token).toBeTruthy();
+      expect(auth.token).toBeTruthy();
     },
   );
 
   test(
-    qase(66, "should reject login with incorrect password — expects 401"),
+    qase(66, "Login returns HTTP 401 for an invalid password"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.AUTH, Tags.SCENARIO.NEGATIVE],
     },
-    async ({ api, registeredUser }) => {
-      const response = await api.auth.login(
+    async ({ api, apiResponse, registeredUser }) => {
+      const response = await api.auth.loginResponse(
         registeredUser.email,
         "wrong-password",
       );
-      const status = response.status();
-
-      expect(status, `Expected 401, but got ${status}`).toBe(401);
+      await apiResponse.expectUnauthorized(response);
     },
   );
 });

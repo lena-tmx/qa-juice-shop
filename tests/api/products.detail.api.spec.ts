@@ -1,36 +1,31 @@
 import { qase } from "playwright-qase-reporter";
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
-import { productResponseSchema } from "@src/api/schemas/products.schemas";
-import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
-test.describe("Products Detail API", () => {
+test.describe("Product Details API", () => {
   test(
-    qase(32, "should return product by id"),
+    qase(32, "Product details API returns the requested product by identifier"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PRODUCTS, Tags.SCENARIO.POSITIVE],
     },
     async ({ api }) => {
-      const response = await api.products.getById(1);
+      const product = await api.products.getById(1);
 
-      expect(response.status()).toBe(200);
-      const body = await parseApiResponse(response, productResponseSchema);
-      expect(body.data.id).toBe(1);
-      expect(body.data.name).toBeTruthy();
-      expect(body.data.price).toBeGreaterThan(0);
+      expect(product.id).toBe(1);
+      expect(product.name).toBeTruthy();
+      expect(product.price).toBeGreaterThan(0);
     },
   );
 
   test(
-    qase(73, "should return 404 for non-existent product id"),
+    qase(73, "Product details API returns HTTP 404 for an unknown identifier"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PRODUCTS, Tags.SCENARIO.NEGATIVE],
     },
-    async ({ api }) => {
-      const response = await api.products.getById(99999);
-      const status = response.status();
+    async ({ api, apiResponse }) => {
+      const response = await api.products.getByIdResponse(99999);
 
-      expect(status, `Expected 404, but got ${status}`).toBe(404);
+      await apiResponse.expectStatus(response, 404);
     },
   );
 });

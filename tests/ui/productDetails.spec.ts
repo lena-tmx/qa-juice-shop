@@ -1,23 +1,16 @@
-import { productResponseSchema } from "@src/api/schemas/products.schemas";
-import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 import { Tags } from "../attributes/tags";
-import { expect, test } from "../fixtures";
+import { test } from "../fixtures";
 
 const PRODUCT_ID = 1;
 
 test.describe("Product Details UI", () => {
   test(
-    "should display product details matching the product data",
+    "Product details dialog matches the selected catalog product",
     {
       tag: [Tags.TEST_TYPE.UI, Tags.FEATURE.PRODUCTS, Tags.SCENARIO.POSITIVE],
     },
     async ({ api, pages }) => {
-      const response = await api.products.getById(PRODUCT_ID);
-      expect(response.status()).toBe(200);
-      const { data: product } = await parseApiResponse(
-        response,
-        productResponseSchema,
-      );
+      const product = await api.products.getById(PRODUCT_ID);
 
       await pages.homePage.open();
       await pages.homePage.openProductDetails(product.name);
@@ -26,17 +19,12 @@ test.describe("Product Details UI", () => {
   );
 
   test(
-    "should close the product details dialog",
+    "Product details dialog closes when the close button is selected",
     {
       tag: [Tags.TEST_TYPE.UI, Tags.FEATURE.PRODUCTS, Tags.SCENARIO.POSITIVE],
     },
     async ({ api, pages }) => {
-      const response = await api.products.getById(PRODUCT_ID);
-      expect(response.status()).toBe(200);
-      const { data: product } = await parseApiResponse(
-        response,
-        productResponseSchema,
-      );
+      const product = await api.products.getById(PRODUCT_ID);
 
       await pages.homePage.open();
       await pages.homePage.openProductDetails(product.name);

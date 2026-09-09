@@ -20,7 +20,14 @@ function formatErrors(errors: ErrorObject[] | null | undefined): string {
 export async function parseApiResponse<T>(
   response: APIResponse,
   schema: JSONSchemaType<T>,
+  expectedStatuses?: readonly number[],
 ): Promise<T> {
+  if (expectedStatuses && !expectedStatuses.includes(response.status())) {
+    throw new Error(
+      `Unexpected API response status for ${response.url()}: expected ${expectedStatuses.join(" or ")}, received ${response.status()} ${response.statusText()}`,
+    );
+  }
+
   const body: unknown = await response.json();
   let validate = validators.get(schema as object) as
     ValidateFunction<T> | undefined;

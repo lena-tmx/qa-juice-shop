@@ -6,7 +6,7 @@ import { test } from "../fixtures";
 test.describe("Registration UI", () => {
   for (const securityQuestion of Object.values(SecurityQuestions)) {
     test(
-      `should register a new user with security question ${securityQuestion.id}`,
+      `User registration and login succeed with security question ${securityQuestion.id}`,
       {
         tag: [
           Tags.TEST_TYPE.UI,

@@ -4,7 +4,7 @@ import { Tags } from "../attributes/tags";
 
 test.describe(`Login UI`, () => {
   test(
-    qase(85, `should login existing user`),
+    qase(85, `Account menu displays the user after a successful login`),
     {
       tag: [Tags.TEST_TYPE.UI, Tags.FEATURE.AUTH],
     },
@@ -21,7 +21,7 @@ test.describe(`Login UI`, () => {
   );
 
   test(
-    qase(1, `should login and then logout successfully`),
+    qase(1, `Account menu displays the login option after logout`),
     {
       tag: [Tags.TEST_TYPE.UI, Tags.FEATURE.AUTH],
     },

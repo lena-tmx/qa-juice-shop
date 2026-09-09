@@ -45,6 +45,7 @@ The repository is organized into framework code and test suites.
 - [src/components](src/components) reusable UI components used by pages
 - [src/modals](src/modals) modal and banner objects
 - [src/api/clients](src/api/clients) low-level API client logic
+- [src/api/reporting](src/api/reporting) API request and response attachments for test reports
 - [src/api/services](src/api/services) high-level domain API services
 - [src/api/types](src/api/types) compile-time request and response contracts grouped by domain
 - [src/api/schemas](src/api/schemas) AJV runtime response schemas grouped by domain
@@ -260,7 +261,7 @@ import { test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 
 test(
-  "should search for a product",
+  "Product search displays an item matching its name",
   {
     tag: [Tags.TEST_TYPE.UI, Tags.FEATURE.SEARCH],
   },
@@ -281,29 +282,25 @@ API tests should use domain services from [src/api/services](src/api/services) i
 
 1. Use the `api` fixture
 2. Call the service method that matches the business action
-3. Check the HTTP status and validate successful response data with the matching domain schema
+3. Use the typed result for business assertions; the service validates successful status and schema
 4. Use test data factories when a user or payload must be generated
 
 ### Example API test
 
 ```typescript
 import { test, expect } from "../fixtures";
-import { productResponseSchema } from "@src/api/schemas/products.schemas";
-import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 import { Tags } from "../attributes/tags";
 
 test(
-  "should return product by id",
+  "Product details API returns the requested product by identifier",
   {
     tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PRODUCTS, Tags.SCENARIO.POSITIVE],
   },
   async ({ api }) => {
-    const response = await api.products.getById(1);
+    const product = await api.products.getById(1);
 
-    expect(response.status()).toBe(200);
-
-    const body = await parseApiResponse(response, productResponseSchema);
-    expect(body.data.id).toBe(1);
+    expect(product.id).toBe(1);
+    expect(product.name).toBeTruthy();
   },
 );
 ```
@@ -329,9 +326,13 @@ Each API domain keeps its responsibilities separate:
 - `services/ProductsService.ts` owns product endpoint paths and request execution
 - `types/products.types.ts` describes request and response data for TypeScript
 - `schemas/products.schemas.ts` validates real response JSON at runtime with AJV
-- `tests/api/products*.spec.ts` owns scenarios, status checks, and business assertions
+- `tests/api/products*.spec.ts` owns scenarios and business assertions
 
-The shared [src/api/clients/ApiClient.ts](src/api/clients/ApiClient.ts) wraps Playwright's `APIRequestContext`. It provides `get`, `post`, `put`, and `delete`, attaches sanitized request/response details to every configured reporter, and is inherited by all domain services. The shared [src/api/schemas/parseApiResponse.ts](src/api/schemas/parseApiResponse.ts) compiles and caches AJV validators and returns typed data only after validation succeeds.
+The shared [src/api/clients/ApiClient.ts](src/api/clients/ApiClient.ts) wraps Playwright's `APIRequestContext`. It provides `get`, `post`, `put`, and `delete`, centralizes optional bearer headers, and is inherited by all domain services. Reporting is a separate responsibility: [src/api/reporting/ApiRequestReporter.ts](src/api/reporting/ApiRequestReporter.ts) generates reproducible cURL commands, masks authorization tokens, and attaches request/response details to Playwright reports. The reporter is injected into `ApiClient`, so transport code does not own report formatting.
+
+Service methods that expose a raw HTTP result return Playwright's `APIResponse`, allowing tests to assert negative and non-standard responses. A domain helper that returns typed data must have a paired raw method named with the `Response` suffix (for example, `getCaptchaResponse`) and validate that response with [src/api/schemas/parseApiResponse.ts](src/api/schemas/parseApiResponse.ts). This helper compiles and caches AJV validators and returns typed data only after validation succeeds.
+
+UI tests may use typed API helpers to prepare or retrieve expected test data, but page objects remain browser-only and do not depend on API services. Reusable test-only assertions and multi-domain workflows belong in [tests/helpers](tests/helpers), keeping spec files focused on readable business actions and outcomes.
 
 ### Good practices
 
@@ -339,6 +340,8 @@ The shared [src/api/clients/ApiClient.ts](src/api/clients/ApiClient.ts) wraps Pl
 - expose helper methods such as `registerAndLogin` when they simplify common flows
 - throw meaningful errors from service helpers when a response is unexpected
 - share low-level request handling through a base API client
+- build bearer headers through `ApiClient.authorizationHeaders` instead of repeating them in services
+- keep raw endpoint methods available and validate every typed helper with `parseApiResponse`
 - keep TypeScript types and AJV schemas in matching domain files
 - keep status and business assertions in tests so negative responses remain accessible
 
@@ -411,7 +414,7 @@ import { test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 
 test(
-  "should add item to basket for authorized user",
+  "Product is added to an authenticated user's basket",
   {
     tag: [Tags.TEST_TYPE.API, Tags.FEATURE.BASKET, Tags.SCENARIO.POSITIVE],
   },

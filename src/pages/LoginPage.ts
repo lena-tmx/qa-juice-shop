@@ -3,9 +3,9 @@ import { BasePage } from "./BasePage";
 import { step } from "@src/utils/step";
 
 export class LoginPage extends BasePage {
-  readonly emailInput: Locator;
-  readonly passwordInput: Locator;
-  readonly loginButton: Locator;
+  private readonly emailInput: Locator;
+  private readonly passwordInput: Locator;
+  private readonly loginButton: Locator;
 
   constructor(page: Page) {
     super(page);

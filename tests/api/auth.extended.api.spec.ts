@@ -2,33 +2,30 @@ import { qase } from "playwright-qase-reporter";
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 import { createTestUser } from "@src/data/factories/userFactory";
-import {
-  securityQuestionsResponseSchema,
-  userResponseSchema,
-} from "@src/api/schemas/auth.schemas";
-import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
+import { SecurityQuestions } from "@src/data/securityQuestions";
 
-test.describe("Auth Extended API", () => {
+test.describe("Extended Authentication API", () => {
   test(
-    qase(12, "should return security questions list"),
+    qase(12, "Security questions API returns all supported options"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.AUTH, Tags.SCENARIO.POSITIVE],
     },
     async ({ api }) => {
-      const response = await api.auth.getSecurityQuestions();
-
-      expect(response.status()).toBe(200);
-      const body = await parseApiResponse(
-        response,
-        securityQuestionsResponseSchema,
+      const securityQuestions = await api.auth.getSecurityQuestions();
+      const expectedQuestions = Object.values(SecurityQuestions).map(
+        ({ text }) => text,
       );
-      expect(body.data.length).toBeGreaterThan(0);
-      expect(body.data[0].question).toBeTruthy();
+      const actualQuestions = securityQuestions.map(({ question }) => question);
+
+      expect(actualQuestions).toHaveLength(expectedQuestions.length);
+      expect(actualQuestions).toEqual(
+        expect.arrayContaining(expectedQuestions),
+      );
     },
   );
 
   test(
-    qase(17, "should register a new user"),
+    qase(17, "User registration succeeds with a unique email"),
     {
       tag: [
         Tags.TEST_TYPE.API,
@@ -38,19 +35,14 @@ test.describe("Auth Extended API", () => {
     },
     async ({ api }) => {
       const user = createTestUser();
-      const response = await api.auth.register(user);
+      const registeredUser = await api.auth.register(user);
 
-      expect([200, 201]).toContain(response.status());
-      const body = await parseApiResponse(response, userResponseSchema);
-      expect(body.data.email).toBe(user.email);
+      expect(registeredUser.email).toBe(user.email);
     },
   );
 
   test(
-    qase(
-      68,
-      "should reject registration with an already-used email — expects 400",
-    ),
+    qase(68, "User registration returns HTTP 400 for an existing email"),
     {
       tag: [
         Tags.TEST_TYPE.API,
@@ -58,19 +50,18 @@ test.describe("Auth Extended API", () => {
         Tags.SCENARIO.NEGATIVE,
       ],
     },
-    async ({ api }) => {
+    async ({ api, apiResponse }) => {
       const user = createTestUser();
-      await api.auth.registerOrThrow(user);
+      await api.auth.register(user);
 
-      const response = await api.auth.register(user);
-      const status = response.status();
+      const response = await api.auth.registerResponse(user);
 
-      expect(status, `Expected 400, but got ${status}`).toBe(400);
+      await apiResponse.expectStatus(response, 400);
     },
   );
 
   test(
-    qase(27, "should change password"),
+    qase(27, "Password change allows login with the new password"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.AUTH, Tags.SCENARIO.POSITIVE],
     },
@@ -78,35 +69,41 @@ test.describe("Auth Extended API", () => {
       const user = createTestUser();
       const auth = await api.auth.registerAndLogin(user);
 
-      const response = await api.auth.changePassword(
+      await api.auth.changePassword(
         auth.token,
         user.password,
         "NewSecurePass1!",
       );
+      const authWithNewPassword = await api.auth.login(
+        user.email,
+        "NewSecurePass1!",
+      );
 
-      expect(response.status()).toBe(200);
+      expect(authWithNewPassword.token).toBeTruthy();
     },
   );
 
   test(
     qase(
       72,
-      "should reject password change with wrong current password — expects 401",
+      "Password change returns HTTP 401 for an invalid current password",
     ),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.AUTH, Tags.SCENARIO.NEGATIVE],
     },
-    async ({ api }) => {
-      const auth = await api.auth.registerAndLogin(createTestUser());
+    async ({ api, apiResponse }) => {
+      const user = createTestUser();
+      const auth = await api.auth.registerAndLogin(user);
 
-      const response = await api.auth.changePassword(
+      const response = await api.auth.changePasswordResponse(
         auth.token,
         "wrong-current-password",
         "NewPass1!",
       );
-      const status = response.status();
+      await apiResponse.expectUnauthorized(response);
 
-      expect(status, `Expected 401, but got ${status}`).toBe(401);
+      const unchangedAuth = await api.auth.login(user.email, user.password);
+      expect(unchangedAuth.token).toBeTruthy();
     },
   );
 });

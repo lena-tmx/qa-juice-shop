@@ -5,7 +5,7 @@ import { step } from "@src/utils/step";
 
 export class BasketPage extends BasePage {
   readonly navbar: Navbar;
-  readonly title: Locator;
+  private readonly title: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -28,20 +28,12 @@ export class BasketPage extends BasePage {
     await expect(this.basketRow(productName)).toBeVisible();
   }
 
-  private basketRow(productName: string): Locator {
-    return this.page.locator("mat-row").filter({
-      has: this.page.locator("mat-cell.cdk-column-product", {
-        hasText: productName,
-      }),
-    });
-  }
-
   @step((productName: string) => `Remove product from basket: ${productName}`)
   async removeProduct(productName: string): Promise<void> {
     const row = this.basketRow(productName);
     await expect(row).toBeVisible();
 
-    const removeButton = row.locator("mat-cell.cdk-column-remove button");
+    const removeButton = this.removeProductButton(row);
     await expect(removeButton).toBeVisible();
     await removeButton.click();
 
@@ -51,5 +43,17 @@ export class BasketPage extends BasePage {
   @step("Verify basket is empty")
   async expectBasketIsEmpty(): Promise<void> {
     await expect(this.page.locator("mat-row")).toHaveCount(0);
+  }
+
+  private basketRow(productName: string): Locator {
+    return this.page.locator("mat-row").filter({
+      has: this.page.locator("mat-cell.cdk-column-product", {
+        hasText: productName,
+      }),
+    });
+  }
+
+  private removeProductButton(row: Locator): Locator {
+    return row.locator("mat-cell.cdk-column-remove button");
   }
 }
