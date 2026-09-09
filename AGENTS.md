@@ -2,6 +2,18 @@
 
 Follow the project architecture and quality rules documented in `CLAUDE.md`.
 
+## Language
+
+Write all repository-facing text in English. This rule is mandatory for:
+
+- commit messages;
+- pull request titles and descriptions;
+- pull request review comments and GitHub issue comments;
+- code comments and TODOs;
+- test titles, step names, documentation, CI messages, and generated report text.
+
+The language used by the user in the conversation does not change this rule.
+
 ## Test case names
 
 Apply these requirements to every `test()` title, including `qase()` and parameterized

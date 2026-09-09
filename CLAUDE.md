@@ -392,17 +392,21 @@ methods.
 
 ## Language Rules
 
-All code-level text must be in English. This includes:
+All repository-facing text produced by AI must be in English. This includes:
 
 - Code comments
+- TODOs
 - Variable, function, and class names
 - Test titles and `test.describe` group names
 - Allure `@step()` descriptions
-- Commit messages and PR descriptions
+- Commit messages
+- Pull request titles and descriptions
+- Pull request review comments and GitHub issue comments
 - Documentation files (README.md, docs/, reports/)
 - CI workflow names and log messages
 
-No exceptions — the codebase is English-only.
+The language used by the user in the conversation does not change this rule. No exceptions —
+the codebase and all repository-facing collaboration are English-only.
 
 ## Naming Conventions
 
