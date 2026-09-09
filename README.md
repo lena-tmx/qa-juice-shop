@@ -261,7 +261,7 @@ import { test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 
 test(
-  "should search for a product",
+  "Product search displays an item matching its name",
   {
     tag: [Tags.TEST_TYPE.UI, Tags.FEATURE.SEARCH],
   },
@@ -292,7 +292,7 @@ import { test, expect } from "../fixtures";
 import { Tags } from "../attributes/tags";
 
 test(
-  "should return product by id",
+  "Product details API returns the requested product by identifier",
   {
     tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PRODUCTS, Tags.SCENARIO.POSITIVE],
   },
@@ -414,7 +414,7 @@ import { test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 
 test(
-  "should add item to basket for authorized user",
+  "Product is added to an authenticated user's basket",
   {
     tag: [Tags.TEST_TYPE.API, Tags.FEATURE.BASKET, Tags.SCENARIO.POSITIVE],
   },

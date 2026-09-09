@@ -4,7 +4,7 @@ import { Tags } from "../attributes/tags";
 
 test.describe(`Search UI`, () => {
   test(
-    qase(86, `should search for a product`),
+    qase(86, `Product search displays an item matching its name`),
     { tag: [Tags.TEST_TYPE.UI, Tags.FEATURE.SEARCH] },
     async ({ pages }) => {
       await pages.homePage.open();
@@ -15,7 +15,7 @@ test.describe(`Search UI`, () => {
   );
 
   test(
-    qase(87, `should display no results found`),
+    qase(87, `Product search displays no results for an unmatched query`),
     { tag: [Tags.TEST_TYPE.UI, Tags.FEATURE.SEARCH] },
     async ({ pages }) => {
       await pages.homePage.open();

@@ -3,9 +3,9 @@ import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 import { createTestUser } from "@src/data/factories/userFactory";
 
-test.describe("Basket CRUD API", () => {
+test.describe("Basket Management API", () => {
   test(
-    qase(8, "should update basket item quantity"),
+    qase(8, "Basket item quantity changes to the requested value"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.BASKET, Tags.SCENARIO.POSITIVE],
     },
@@ -32,7 +32,7 @@ test.describe("Basket CRUD API", () => {
   );
 
   test(
-    qase(10, "should delete basket item"),
+    qase(10, "Basket no longer contains an item after removal"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.BASKET, Tags.SCENARIO.POSITIVE],
     },
@@ -60,7 +60,7 @@ test.describe("Basket CRUD API", () => {
   );
 
   test(
-    qase(11, "should return basket by id"),
+    qase(11, "Basket API returns the requested basket by identifier"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.BASKET, Tags.SCENARIO.POSITIVE],
     },

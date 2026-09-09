@@ -5,7 +5,7 @@ import { createTestUser } from "@src/data/factories/userFactory";
 
 test.describe("Order API", () => {
   test(
-    qase(22, "should return empty order history for new user"),
+    qase(22, "Order history is empty for a new user"),
     {
       tag: [
         Tags.TEST_TYPE.API,
@@ -23,7 +23,7 @@ test.describe("Order API", () => {
   );
 
   test(
-    qase(71, "should reject order history access without authentication"),
+    qase(71, "Order history cannot be accessed without authentication"),
     {
       tag: [
         Tags.TEST_TYPE.API,

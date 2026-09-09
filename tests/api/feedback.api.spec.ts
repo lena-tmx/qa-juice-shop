@@ -6,7 +6,7 @@ import { TestData } from "@src/utils/TestData";
 
 test.describe("Feedback API", () => {
   test(
-    qase(19, "should submit feedback with valid captcha"),
+    qase(19, "Feedback is submitted with a valid CAPTCHA answer"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.FEEDBACK, Tags.SCENARIO.POSITIVE],
     },
@@ -26,10 +26,7 @@ test.describe("Feedback API", () => {
   );
 
   test(
-    qase(
-      69,
-      "should reject feedback with an incorrect CAPTCHA answer — expects 401",
-    ),
+    qase(69, "Feedback returns HTTP 401 for an invalid CAPTCHA answer"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.FEEDBACK, Tags.SCENARIO.NEGATIVE],
     },

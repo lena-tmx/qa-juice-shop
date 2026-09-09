@@ -4,7 +4,7 @@ import { Tags } from "../attributes/tags";
 
 test.describe("Auth API", () => {
   test(
-    qase(4, "should login existing user"),
+    qase(4, "Login succeeds with valid credentials"),
     {
       tag: [
         Tags.TEST_TYPE.API,
@@ -24,7 +24,7 @@ test.describe("Auth API", () => {
   );
 
   test(
-    qase(66, "should reject login with incorrect password — expects 401"),
+    qase(66, "Login returns HTTP 401 for an invalid password"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.AUTH, Tags.SCENARIO.NEGATIVE],
     },

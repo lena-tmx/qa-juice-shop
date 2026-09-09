@@ -5,7 +5,7 @@ import { Tags } from "../attributes/tags";
 
 test.describe("Basket API", () => {
   test(
-    qase(3, "should add item to basket for authorized user"),
+    qase(3, "Product is added to an authenticated user's basket"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.BASKET, Tags.SCENARIO.POSITIVE],
     },
@@ -29,10 +29,7 @@ test.describe("Basket API", () => {
   );
 
   test(
-    qase(
-      65,
-      "should reject adding basket item without an auth token — expects 401",
-    ),
+    qase(65, "Product cannot be added to a basket without authentication"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.BASKET, Tags.SCENARIO.NEGATIVE],
     },
@@ -47,7 +44,7 @@ test.describe("Basket API", () => {
   );
 
   test(
-    qase(6, "should return the added item in the basket items list"),
+    qase(6, "Basket items list contains the newly added product"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.BASKET, Tags.SCENARIO.POSITIVE],
     },

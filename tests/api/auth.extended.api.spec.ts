@@ -2,23 +2,30 @@ import { qase } from "playwright-qase-reporter";
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 import { createTestUser } from "@src/data/factories/userFactory";
+import { SecurityQuestions } from "@src/data/securityQuestions";
 
-test.describe("Auth Extended API", () => {
+test.describe("Extended Authentication API", () => {
   test(
-    qase(12, "should return security questions list"),
+    qase(12, "Security questions API returns all supported options"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.AUTH, Tags.SCENARIO.POSITIVE],
     },
     async ({ api }) => {
       const securityQuestions = await api.auth.getSecurityQuestions();
+      const expectedQuestions = Object.values(SecurityQuestions).map(
+        ({ text }) => text,
+      );
+      const actualQuestions = securityQuestions.map(({ question }) => question);
 
-      expect(securityQuestions.length).toBeGreaterThan(0);
-      expect(securityQuestions[0].question).toBeTruthy();
+      expect(actualQuestions).toHaveLength(expectedQuestions.length);
+      expect(actualQuestions).toEqual(
+        expect.arrayContaining(expectedQuestions),
+      );
     },
   );
 
   test(
-    qase(17, "should register a new user"),
+    qase(17, "User registration succeeds with a unique email"),
     {
       tag: [
         Tags.TEST_TYPE.API,
@@ -35,10 +42,7 @@ test.describe("Auth Extended API", () => {
   );
 
   test(
-    qase(
-      68,
-      "should reject registration with an already-used email — expects 400",
-    ),
+    qase(68, "User registration returns HTTP 400 for an existing email"),
     {
       tag: [
         Tags.TEST_TYPE.API,
@@ -57,7 +61,7 @@ test.describe("Auth Extended API", () => {
   );
 
   test(
-    qase(27, "should change password"),
+    qase(27, "Password change allows login with the new password"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.AUTH, Tags.SCENARIO.POSITIVE],
     },
@@ -82,7 +86,7 @@ test.describe("Auth Extended API", () => {
   test(
     qase(
       72,
-      "should reject password change with wrong current password — expects 401",
+      "Password change returns HTTP 401 for an invalid current password",
     ),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.AUTH, Tags.SCENARIO.NEGATIVE],

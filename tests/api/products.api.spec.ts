@@ -4,7 +4,7 @@ import { Tags } from "../attributes/tags";
 
 test.describe("Products API", () => {
   test(
-    qase(26, "should return products"),
+    qase(26, "Product catalog API returns available products"),
     {
       tag: [
         Tags.TEST_TYPE.API,
@@ -21,7 +21,7 @@ test.describe("Products API", () => {
   );
 
   test(
-    qase(28, "should find apple product in search"),
+    qase(28, "Product search returns only items matching Apple"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PRODUCTS, Tags.SCENARIO.POSITIVE],
     },
@@ -34,7 +34,7 @@ test.describe("Products API", () => {
   );
 
   test(
-    qase(29, "should return empty search result"),
+    qase(29, "Product search returns an empty list for an unmatched query"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PRODUCTS, Tags.SCENARIO.NEGATIVE],
     },

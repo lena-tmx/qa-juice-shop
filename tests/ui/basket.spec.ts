@@ -6,7 +6,7 @@ test.describe(`Basket UI`, () => {
   const productName = "Carrot Juice";
 
   test(
-    qase(83, `should add product to basket and see it there`),
+    qase(83, `Basket displays a product after it is added`),
     { tag: [Tags.TEST_TYPE.UI, Tags.FEATURE.BASKET] },
     async ({ authenticatedPages }) => {
       await authenticatedPages.homePage.addProductToBasket(productName);
@@ -18,7 +18,7 @@ test.describe(`Basket UI`, () => {
   );
 
   test(
-    qase(84, `should add and remove product to basket and see it empty`),
+    qase(84, `Basket is empty after its only product is removed`),
     { tag: [Tags.TEST_TYPE.UI, Tags.FEATURE.BASKET] },
     async ({ authenticatedPages }) => {
       await authenticatedPages.homePage.addProductToBasket(productName);

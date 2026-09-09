@@ -5,7 +5,7 @@ const PRODUCT_ID = 1;
 
 test.describe("Product Details UI", () => {
   test(
-    "should display product details matching the product data",
+    "Product details dialog matches the selected catalog product",
     {
       tag: [Tags.TEST_TYPE.UI, Tags.FEATURE.PRODUCTS, Tags.SCENARIO.POSITIVE],
     },
@@ -19,7 +19,7 @@ test.describe("Product Details UI", () => {
   );
 
   test(
-    "should close the product details dialog",
+    "Product details dialog closes when the close button is selected",
     {
       tag: [Tags.TEST_TYPE.UI, Tags.FEATURE.PRODUCTS, Tags.SCENARIO.POSITIVE],
     },

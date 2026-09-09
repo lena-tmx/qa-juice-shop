@@ -2,9 +2,9 @@ import { qase } from "playwright-qase-reporter";
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 
-test.describe("Products Detail API", () => {
+test.describe("Product Details API", () => {
   test(
-    qase(32, "should return product by id"),
+    qase(32, "Product details API returns the requested product by identifier"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PRODUCTS, Tags.SCENARIO.POSITIVE],
     },
@@ -18,7 +18,7 @@ test.describe("Products Detail API", () => {
   );
 
   test(
-    qase(73, "should return 404 for non-existent product id"),
+    qase(73, "Product details API returns HTTP 404 for an unknown identifier"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PRODUCTS, Tags.SCENARIO.NEGATIVE],
     },

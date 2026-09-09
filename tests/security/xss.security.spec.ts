@@ -4,10 +4,7 @@ import { Tags } from "../attributes/tags";
 
 test.describe("Input Validation", () => {
   test(
-    qase(
-      39,
-      "should not reflect raw script payload in products search API response",
-    ),
+    qase(39, "Product search API does not reflect a script payload"),
     {
       tag: [
         Tags.TEST_TYPE.SECURITY,
@@ -25,7 +22,7 @@ test.describe("Input Validation", () => {
   );
 
   test(
-    qase(95, "should not execute script payload in UI search"),
+    qase(95, "Product search interface does not execute a script payload"),
     {
       tag: [
         Tags.TEST_TYPE.SECURITY,

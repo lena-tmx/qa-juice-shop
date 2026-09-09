@@ -277,11 +277,50 @@ Usage:
 
 ```ts
 test(
-  "should do something",
+  "Complete a clearly stated user outcome",
   { tag: [Tags.TEST_TYPE.API, Tags.FEATURE.AUTH, Tags.SCENARIO.POSITIVE] },
   async ({ api }) => { ... },
 );
 ```
+
+## Test Case Name Rules
+
+Apply these rules to every `test()` title, including titles passed through `qase()` and
+titles generated for parameterized tests:
+
+1. Start with a capital letter and write the title as a natural English sentence.
+2. Use a concise, human-readable behavior and outcome, such as `Login succeeds with valid
+   credentials`. Do not begin with `should` and do not use internal codes or unexplained
+   abbreviations.
+3. Make every title unique within the project. Distinguish similar cases by the scenario's
+   meaningful variant, such as `Login returns HTTP 401 for an invalid password`.
+4. Keep implementation details and test data out of the title. Do not include HTTP status
+   codes, endpoint paths, Qase IDs, selectors, or lengthy input values unless they are the
+   behavior being tested.
+5. Keep titles reusable across browsers and environments. Browser, device, and environment
+   belong in the test project configuration or run metadata, not in the title.
+6. Answer **what**, **where**, and **under which condition** whenever those details are
+   needed to identify the case. Prefer `Basket is empty after its only product is removed`
+   over `Remove an item`.
+7. Describe observable business behavior rather than test mechanics. An expected HTTP
+   status may be included when it is part of an API contract, but omit endpoint paths,
+   assertion syntax, and execution details.
+
+Use `test.describe()` names only for concise feature or capability grouping. Start group
+names with a capital letter and do not repeat browser or environment names there.
+
+Good examples:
+
+- `User registration succeeds with a unique email`
+- `User registration returns HTTP 400 for an existing email`
+- `Product search displays no results for an unmatched query`
+
+Bad examples:
+
+- `should register user`
+- `Auth003`
+- `Login in Chromium`
+- `POST /rest/user/login returns 200`
 
 ## Step Decorator Rules
 

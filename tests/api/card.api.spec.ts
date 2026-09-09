@@ -6,7 +6,7 @@ import { createTestCard } from "@src/data/factories/cardFactory";
 
 test.describe("Card API", () => {
   test(
-    qase(13, "should add a payment card"),
+    qase(13, "Payment card is added to an authenticated user's wallet"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PAYMENT, Tags.SCENARIO.POSITIVE],
     },
@@ -24,7 +24,7 @@ test.describe("Card API", () => {
   );
 
   test(
-    qase(15, "should return empty card list for new user"),
+    qase(15, "Payment card list is empty for a new user"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PAYMENT, Tags.SCENARIO.POSITIVE],
     },
@@ -38,10 +38,7 @@ test.describe("Card API", () => {
   );
 
   test(
-    qase(
-      67,
-      "should reject adding a payment card without authentication — expects 401",
-    ),
+    qase(67, "Payment card cannot be added without authentication"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PAYMENT, Tags.SCENARIO.NEGATIVE],
     },

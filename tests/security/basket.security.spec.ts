@@ -5,10 +5,7 @@ import { Tags } from "../attributes/tags";
 
 test.describe("Broken Access Control", () => {
   test(
-    qase(
-      36,
-      "should not allow accessing arbitrary basket by id without auth (IDOR)",
-    ),
+    qase(36, "Basket cannot be accessed by identifier without authentication"),
     {
       tag: [
         Tags.TEST_TYPE.SECURITY,
@@ -27,10 +24,7 @@ test.describe("Broken Access Control", () => {
   );
 
   test(
-    qase(
-      96,
-      "should not allow one user to access another user's basket (IDOR)",
-    ),
+    qase(96, "User cannot access another user's basket by identifier"),
     {
       tag: [
         Tags.TEST_TYPE.SECURITY,
@@ -64,10 +58,7 @@ test.describe("Broken Access Control", () => {
   );
 
   test(
-    qase(
-      41,
-      "should not allow one user to add item into another user's basket",
-    ),
+    qase(41, "User cannot add a product to another user's basket"),
     {
       tag: [
         Tags.TEST_TYPE.SECURITY,

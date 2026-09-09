@@ -6,7 +6,7 @@ import { createTestAddress } from "@src/data/factories/addressFactory";
 
 test.describe("Address API", () => {
   test(
-    qase(9, "should create a new address"),
+    qase(9, "Delivery address is added to an authenticated user's profile"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.ADDRESS, Tags.SCENARIO.POSITIVE],
     },
@@ -25,7 +25,7 @@ test.describe("Address API", () => {
   );
 
   test(
-    qase(14, "should return empty address list for new user"),
+    qase(14, "Address list is empty for a new user's profile"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.ADDRESS, Tags.SCENARIO.POSITIVE],
     },
@@ -39,7 +39,7 @@ test.describe("Address API", () => {
   );
 
   test(
-    qase(18, "should not create address without authentication"),
+    qase(18, "Delivery address cannot be added without authentication"),
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.ADDRESS, Tags.SCENARIO.NEGATIVE],
     },
