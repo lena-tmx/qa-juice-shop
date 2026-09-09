@@ -3,11 +3,6 @@ import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 import { createTestUser } from "@src/data/factories/userFactory";
 import { createTestCard } from "@src/data/factories/cardFactory";
-import {
-  cardListResponseSchema,
-  cardResponseSchema,
-} from "@src/api/schemas/card.schemas";
-import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Card API", () => {
   test(
@@ -19,12 +14,12 @@ test.describe("Card API", () => {
       const auth = await api.auth.registerAndLogin(createTestUser());
       const card = createTestCard();
 
-      const response = await api.card.create(auth.token, card);
+      const createdCard = await api.card.create(auth.token, card);
 
-      expect(response.status()).toBe(201);
-      const body = await parseApiResponse(response, cardResponseSchema);
-      expect(body.data.fullName).toBe(card.fullName);
-      expect(body.data.expMonth).toBe(card.expMonth);
+      expect(createdCard).toMatchObject({
+        fullName: card.fullName,
+        expMonth: card.expMonth,
+      });
     },
   );
 
@@ -36,11 +31,9 @@ test.describe("Card API", () => {
     async ({ api }) => {
       const auth = await api.auth.registerAndLogin(createTestUser());
 
-      const response = await api.card.getAll(auth.token);
+      const cards = await api.card.getAll(auth.token);
 
-      expect(response.status()).toBe(200);
-      const body = await parseApiResponse(response, cardListResponseSchema);
-      expect(body.data).toEqual([]);
+      expect(cards).toEqual([]);
     },
   );
 
@@ -52,11 +45,10 @@ test.describe("Card API", () => {
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PAYMENT, Tags.SCENARIO.NEGATIVE],
     },
-    async ({ api }) => {
-      const response = await api.card.create("", createTestCard());
-      const status = response.status();
+    async ({ api, apiResponse }) => {
+      const response = await api.card.createResponse("", createTestCard());
 
-      expect(status, `Expected 401, but got ${status}`).toBe(401);
+      await apiResponse.expectUnauthorized(response);
     },
   );
 });

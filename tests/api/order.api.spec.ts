@@ -2,8 +2,6 @@ import { qase } from "playwright-qase-reporter";
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 import { createTestUser } from "@src/data/factories/userFactory";
-import { orderHistoryResponseSchema } from "@src/api/schemas/order.schemas";
-import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Order API", () => {
   test(
@@ -18,11 +16,9 @@ test.describe("Order API", () => {
     async ({ api }) => {
       const auth = await api.auth.registerAndLogin(createTestUser());
 
-      const response = await api.order.getHistory(auth.token);
+      const orders = await api.order.getHistory(auth.token);
 
-      expect(response.status()).toBe(200);
-      const body = await parseApiResponse(response, orderHistoryResponseSchema);
-      expect(body.data).toEqual([]);
+      expect(orders).toEqual([]);
     },
   );
 
@@ -35,13 +31,10 @@ test.describe("Order API", () => {
         Tags.SCENARIO.NEGATIVE,
       ],
     },
-    async ({ api }) => {
-      const response = await api.order.getHistory("");
-      const status = response.status();
+    async ({ api, apiResponse }) => {
+      const response = await api.order.getHistoryResponse("");
 
-      expect([401, 403], `Expected 401 or 403, but got ${status}`).toContain(
-        status,
-      );
+      await apiResponse.expectUnauthorized(response, [401, 403]);
     },
   );
 });

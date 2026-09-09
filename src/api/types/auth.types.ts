@@ -14,6 +14,12 @@ export interface LoginResponse {
   token?: string;
 }
 
+export interface AuthData {
+  token: string;
+  basketId: number;
+  email?: string;
+}
+
 export interface WhoAmIResponse {
   user?: {
     id: number;

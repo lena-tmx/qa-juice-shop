@@ -2,8 +2,6 @@ import { qase } from "playwright-qase-reporter";
 import { expect, test } from "../fixtures";
 import { createTestUser } from "@src/data/factories/userFactory";
 import { Tags } from "../attributes/tags";
-import { basketItemResponseSchema } from "@src/api/schemas/basket.schemas";
-import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Basket API", () => {
   test(
@@ -16,13 +14,17 @@ test.describe("Basket API", () => {
       const login = await api.auth.registerAndLogin(user);
       const token = login.token;
 
-      const response = await api.basket.addItem(token, {
+      const basketItem = await api.basket.addItem(token, {
         ProductId: 1,
         BasketId: login.basketId,
         quantity: 1,
       });
 
-      expect([200, 201]).toContain(response.status());
+      expect(basketItem).toMatchObject({
+        ProductId: 1,
+        BasketId: login.basketId,
+        quantity: 1,
+      });
     },
   );
 
@@ -34,15 +36,13 @@ test.describe("Basket API", () => {
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.BASKET, Tags.SCENARIO.NEGATIVE],
     },
-    async ({ api }) => {
-      const response = await api.basket.addItem("", {
+    async ({ api, apiResponse }) => {
+      const response = await api.basket.addItemResponse("", {
         ProductId: 1,
         BasketId: 1,
         quantity: 1,
       });
-      const status = response.status();
-
-      expect(status, `Expected 401, but got ${status}`).toBe(401);
+      await apiResponse.expectUnauthorized(response);
     },
   );
 
@@ -56,18 +56,13 @@ test.describe("Basket API", () => {
       const productId = 1;
       const quantity = 1;
 
-      const addResponse = await api.basket.addItem(auth.token, {
+      const addedItem = await api.basket.addItem(auth.token, {
         ProductId: productId,
         BasketId: auth.basketId,
         quantity,
       });
 
-      expect(addResponse.status()).toBe(200);
-      const addBody = await parseApiResponse(
-        addResponse,
-        basketItemResponseSchema,
-      );
-      expect(addBody.data).toMatchObject({
+      expect(addedItem).toMatchObject({
         ProductId: productId,
         BasketId: auth.basketId,
         quantity,
@@ -77,7 +72,7 @@ test.describe("Basket API", () => {
 
       expect(basketItems).toContainEqual(
         expect.objectContaining({
-          id: addBody.data.id,
+          id: addedItem.id,
           ProductId: productId,
           BasketId: auth.basketId,
           quantity,

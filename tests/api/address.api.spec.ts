@@ -3,11 +3,6 @@ import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 import { createTestUser } from "@src/data/factories/userFactory";
 import { createTestAddress } from "@src/data/factories/addressFactory";
-import {
-  addressListResponseSchema,
-  addressResponseSchema,
-} from "@src/api/schemas/address.schemas";
-import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Address API", () => {
   test(
@@ -19,13 +14,13 @@ test.describe("Address API", () => {
       const auth = await api.auth.registerAndLogin(createTestUser());
       const address = createTestAddress();
 
-      const response = await api.address.create(auth.token, address);
+      const createdAddress = await api.address.create(auth.token, address);
 
-      expect(response.status()).toBe(201);
-      const body = await parseApiResponse(response, addressResponseSchema);
-      expect(body.data.fullName).toBe(address.fullName);
-      expect(body.data.city).toBe(address.city);
-      expect(body.data.country).toBe(address.country);
+      expect(createdAddress).toMatchObject({
+        fullName: address.fullName,
+        city: address.city,
+        country: address.country,
+      });
     },
   );
 
@@ -37,11 +32,9 @@ test.describe("Address API", () => {
     async ({ api }) => {
       const auth = await api.auth.registerAndLogin(createTestUser());
 
-      const response = await api.address.getAll(auth.token);
+      const addresses = await api.address.getAll(auth.token);
 
-      expect(response.status()).toBe(200);
-      const body = await parseApiResponse(response, addressListResponseSchema);
-      expect(body.data).toEqual([]);
+      expect(addresses).toEqual([]);
     },
   );
 
@@ -50,14 +43,13 @@ test.describe("Address API", () => {
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.ADDRESS, Tags.SCENARIO.NEGATIVE],
     },
-    async ({ api }) => {
-      const response = await api.address.create("", createTestAddress());
-      const status = response.status();
+    async ({ api, apiResponse }) => {
+      const response = await api.address.createResponse(
+        "",
+        createTestAddress(),
+      );
 
-      expect(
-        [401, 403].includes(status),
-        `Expected 401 or 403, but got ${status}`,
-      ).toBeTruthy();
+      await apiResponse.expectUnauthorized(response, [401, 403]);
     },
   );
 });

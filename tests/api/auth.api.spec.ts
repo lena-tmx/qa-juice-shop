@@ -1,8 +1,6 @@
 import { qase } from "playwright-qase-reporter";
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
-import { loginResponseSchema } from "@src/api/schemas/auth.schemas";
-import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Auth API", () => {
   test(
@@ -16,15 +14,12 @@ test.describe("Auth API", () => {
       ],
     },
     async ({ api, registeredUser }) => {
-      const response = await api.auth.login(
+      const auth = await api.auth.login(
         registeredUser.email,
         registeredUser.password,
       );
 
-      expect(response.status()).toBe(200);
-
-      const body = await parseApiResponse(response, loginResponseSchema);
-      expect(body.token ?? body.authentication.token).toBeTruthy();
+      expect(auth.token).toBeTruthy();
     },
   );
 
@@ -33,14 +28,12 @@ test.describe("Auth API", () => {
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.AUTH, Tags.SCENARIO.NEGATIVE],
     },
-    async ({ api, registeredUser }) => {
-      const response = await api.auth.login(
+    async ({ api, apiResponse, registeredUser }) => {
+      const response = await api.auth.loginResponse(
         registeredUser.email,
         "wrong-password",
       );
-      const status = response.status();
-
-      expect(status, `Expected 401, but got ${status}`).toBe(401);
+      await apiResponse.expectUnauthorized(response);
     },
   );
 });

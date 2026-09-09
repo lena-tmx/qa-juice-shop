@@ -2,11 +2,6 @@ import { qase } from "playwright-qase-reporter";
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 import { createTestUser } from "@src/data/factories/userFactory";
-import {
-  basketItemResponseSchema,
-  basketResponseSchema,
-} from "@src/api/schemas/basket.schemas";
-import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Basket CRUD API", () => {
   test(
@@ -17,32 +12,22 @@ test.describe("Basket CRUD API", () => {
     async ({ api }) => {
       const auth = await api.auth.registerAndLogin(createTestUser());
 
-      const addResponse = await api.basket.addItem(auth.token, {
+      const addedItem = await api.basket.addItem(auth.token, {
         ProductId: 1,
         BasketId: auth.basketId,
         quantity: 1,
       });
 
-      expect(addResponse.status()).toBe(200);
-      const addBody = await parseApiResponse(
-        addResponse,
-        basketItemResponseSchema,
-      );
-      expect(addBody.data).toMatchObject({
+      expect(addedItem).toMatchObject({
         ProductId: 1,
         BasketId: auth.basketId,
         quantity: 1,
       });
-      const itemId = addBody.data.id;
+      const itemId = addedItem.id;
 
-      const updateResponse = await api.basket.updateItem(auth.token, itemId, 5);
+      const updatedItem = await api.basket.updateItem(auth.token, itemId, 5);
 
-      expect(updateResponse.status()).toBe(200);
-      const updateBody = await parseApiResponse(
-        updateResponse,
-        basketItemResponseSchema,
-      );
-      expect(updateBody.data.quantity).toBe(5);
+      expect(updatedItem.quantity).toBe(5);
     },
   );
 
@@ -51,33 +36,26 @@ test.describe("Basket CRUD API", () => {
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.BASKET, Tags.SCENARIO.POSITIVE],
     },
-    async ({ api }) => {
+    async ({ api, domain }) => {
       const auth = await api.auth.registerAndLogin(createTestUser());
 
-      const addResponse = await api.basket.addItem(auth.token, {
+      const addedItem = await api.basket.addItem(auth.token, {
         ProductId: 1,
         BasketId: auth.basketId,
         quantity: 1,
       });
 
-      expect(addResponse.status()).toBe(200);
-      const addBody = await parseApiResponse(
-        addResponse,
-        basketItemResponseSchema,
-      );
-      expect(addBody.data).toMatchObject({
+      expect(addedItem).toMatchObject({
         ProductId: 1,
         BasketId: auth.basketId,
         quantity: 1,
       });
-      const itemId = addBody.data.id;
+      const itemId = addedItem.id;
 
-      const deleteResponse = await api.basket.deleteItem(auth.token, itemId);
-
-      expect(deleteResponse.status()).toBe(200);
+      await api.basket.deleteItem(auth.token, itemId);
 
       const basketItems = await api.basket.getBasketItems(auth.token);
-      expect(basketItems.find((item) => item.id === itemId)).toBeUndefined();
+      await domain.expectBasketItemAbsent(basketItems, itemId);
     },
   );
 
@@ -89,12 +67,10 @@ test.describe("Basket CRUD API", () => {
     async ({ api }) => {
       const auth = await api.auth.registerAndLogin(createTestUser());
 
-      const response = await api.basket.getBasket(auth.basketId, auth.token);
+      const basket = await api.basket.getBasket(auth.basketId, auth.token);
 
-      expect(response.status()).toBe(200);
-      const body = await parseApiResponse(response, basketResponseSchema);
-      expect(body.data.id).toBe(auth.basketId);
-      expect(body.data.Products).toBeDefined();
+      expect(basket.id).toBe(auth.basketId);
+      expect(basket.Products).toBeDefined();
     },
   );
 });

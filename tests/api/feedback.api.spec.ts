@@ -3,8 +3,6 @@ import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 import { createTestUser } from "@src/data/factories/userFactory";
 import { TestData } from "@src/utils/TestData";
-import { feedbackResponseSchema } from "@src/api/schemas/feedback.schemas";
-import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Feedback API", () => {
   test(
@@ -17,16 +15,13 @@ test.describe("Feedback API", () => {
       const comment = TestData.getFeedbackComment();
       const rating = TestData.getRating();
 
-      const response = await api.feedback.submitWithCaptcha(
+      const feedback = await api.feedback.submitWithCaptcha(
         auth.token,
         comment,
         rating,
       );
 
-      expect(response.status()).toBe(201);
-      const body = await parseApiResponse(response, feedbackResponseSchema);
-      expect(body.data.comment).toBe(comment);
-      expect(body.data.rating).toBe(rating);
+      expect(feedback).toMatchObject({ comment, rating });
     },
   );
 
@@ -38,18 +33,16 @@ test.describe("Feedback API", () => {
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.FEEDBACK, Tags.SCENARIO.NEGATIVE],
     },
-    async ({ api }) => {
+    async ({ api, apiResponse }) => {
       const auth = await api.auth.registerAndLogin(createTestUser());
 
-      const response = await api.feedback.submit(auth.token, {
+      const response = await api.feedback.submitResponse(auth.token, {
         comment: TestData.getFeedbackComment(),
         rating: TestData.getRating(),
         captchaId: 0,
         captcha: "wrong",
       });
-      const status = response.status();
-
-      expect(status, `Expected 401, but got ${status}`).toBe(401);
+      await apiResponse.expectUnauthorized(response);
     },
   );
 });

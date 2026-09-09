@@ -3,17 +3,23 @@ import { createTestUser, type TestUser } from "@src/data/factories/userFactory";
 import { step } from "@src/utils/step";
 import {
   loginResponseSchema,
+  securityQuestionsResponseSchema,
   userResponseSchema,
 } from "../schemas/auth.schemas";
 import { parseApiResponse } from "../schemas/parseApiResponse";
 import { env } from "@src/utils/env";
+import type {
+  AuthData,
+  SecurityQuestionResponse,
+  User,
+} from "../types/auth.types";
 
 export class AuthService extends ApiClient {
   private readonly createdUserIds = new Set<number>();
 
   @step((user: TestUser) => `Attempt to register user: ${user.email}`)
-  async register(user: TestUser) {
-    const response = await this.post("/api/Users/", {
+  async registerResponse(user: TestUser) {
+    return this.post("/api/Users/", {
       data: {
         email: user.email,
         password: user.password,
@@ -24,31 +30,24 @@ export class AuthService extends ApiClient {
         securityAnswer: user.securityQuestion.answer,
       },
     });
-
-    if ([200, 201].includes(response.status())) {
-      const registered = await parseApiResponse(response, userResponseSchema);
-      this.createdUserIds.add(registered.data.id);
-    }
-
-    return response;
   }
 
-  @step((user: TestUser) => `Set up registered user: ${user.email}`)
-  async registerOrThrow(user: TestUser): Promise<void> {
-    const response = await this.register(user);
-
-    if (![200, 201].includes(response.status())) {
-      const body = await response.text();
-      throw new Error(
-        `User registration failed. Status: ${response.status()}, body: ${body}`,
-      );
-    }
+  @step((user: TestUser) => `Register user: ${user.email}`)
+  async register(user: TestUser): Promise<User> {
+    const response = await this.registerResponse(user);
+    const registered = await parseApiResponse(
+      response,
+      userResponseSchema,
+      [200, 201],
+    );
+    this.createdUserIds.add(registered.data.id);
+    return registered.data;
   }
 
   @step(
     (email: string, _password: string) => `Log in with credentials: ${email}`,
   )
-  async login(email: string, password: string) {
+  async loginResponse(email: string, password: string) {
     return this.post("/rest/user/login", {
       data: { email, password },
     });
@@ -58,60 +57,86 @@ export class AuthService extends ApiClient {
     (email: string, _password: string) =>
       `Log in and retrieve session token: ${email}`,
   )
-  async loginAndGetAuthData(email: string, password: string) {
-    const response = await this.login(email, password);
+  async login(email: string, password: string): Promise<AuthData> {
+    const response = await this.loginResponse(email, password);
+    const parsed = await parseApiResponse(response, loginResponseSchema, [200]);
 
-    if (response.status() !== 200) {
-      const body = await response.text();
-      throw new Error(
-        `Login failed. Status: ${response.status()}, body: ${body}`,
-      );
-    }
-
-    const parsed = await parseApiResponse(response, loginResponseSchema);
+    const token = parsed.token ?? parsed.authentication.token;
 
     return {
-      token: parsed.token ?? parsed.authentication?.token,
-      basketId: parsed.authentication?.bid,
-      email: parsed.authentication?.umail,
-      raw: parsed,
+      token,
+      basketId: parsed.authentication.bid,
+      email: parsed.authentication.umail,
     };
   }
 
   @step((user: TestUser) => `Register and log in user: ${user.email}`)
   async registerAndLogin(user: TestUser) {
-    await this.registerOrThrow(user);
-    return this.loginAndGetAuthData(user.email, user.password);
+    await this.register(user);
+    return this.login(user.email, user.password);
   }
 
   @step("Create test user")
   async createTestUser() {
     const user = createTestUser();
-    await this.registerOrThrow(user);
+    await this.register(user);
     return user;
   }
 
   @step("Change password")
-  async changePassword(token: string, current: string, newPassword: string) {
+  async changePasswordResponse(
+    token: string,
+    current: string,
+    newPassword: string,
+  ) {
     return this.get(
       `/rest/user/change-password?current=${encodeURIComponent(current)}&new=${encodeURIComponent(newPassword)}&repeat=${encodeURIComponent(newPassword)}`,
       {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: this.authorizationHeaders(token),
       },
     );
   }
 
+  @step("Change password")
+  async changePassword(
+    token: string,
+    current: string,
+    newPassword: string,
+  ): Promise<void> {
+    const response = await this.changePasswordResponse(
+      token,
+      current,
+      newPassword,
+    );
+    if (response.status() !== 200) {
+      throw new Error(
+        `Password change failed: received ${response.status()} ${response.statusText()}`,
+      );
+    }
+  }
+
   @step("Retrieve list of security questions")
-  async getSecurityQuestions() {
+  async getSecurityQuestionsResponse() {
     return this.get("/api/SecurityQuestions");
+  }
+
+  @step("Retrieve list of security questions")
+  async getSecurityQuestions(): Promise<SecurityQuestionResponse[]> {
+    const response = await this.getSecurityQuestionsResponse();
+    const body = await parseApiResponse(
+      response,
+      securityQuestionsResponseSchema,
+      [200],
+    );
+    return body.data;
   }
 
   @step(
     (userId: number, _adminToken: string) => `Delete test user (id: ${userId})`,
   )
-  async deleteUser(userId: number, adminToken: string) {
+  async deleteUserResponse(userId: number, adminToken: string) {
     return this.delete(`/api/Users/${userId}`, {
-      headers: { Authorization: `Bearer ${adminToken}` },
+      headers: this.authorizationHeaders(adminToken),
     });
   }
 
@@ -127,13 +152,13 @@ export class AuthService extends ApiClient {
       return;
     }
 
-    const admin = await this.loginAndGetAuthData(
+    const admin = await this.login(
       env.cleanupAdminEmail,
       env.cleanupAdminPassword,
     );
 
     for (const userId of this.createdUserIds) {
-      const response = await this.deleteUser(userId, admin.token);
+      const response = await this.deleteUserResponse(userId, admin.token);
       if (![200, 204].includes(response.status())) {
         throw new Error(
           `Test-user cleanup failed for user ${userId}: HTTP ${response.status()}`,

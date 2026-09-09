@@ -1,8 +1,6 @@
 import { qase } from "playwright-qase-reporter";
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
-import { productListResponseSchema } from "@src/api/schemas/products.schemas";
-import { parseApiResponse } from "@src/api/schemas/parseApiResponse";
 
 test.describe("Products API", () => {
   test(
@@ -16,13 +14,9 @@ test.describe("Products API", () => {
       ],
     },
     async ({ api }) => {
-      const response = await api.products.getAll();
+      const products = await api.products.getAll();
 
-      expect(response.ok()).toBeTruthy();
-      expect(response.status()).toBe(200);
-
-      const body = await parseApiResponse(response, productListResponseSchema);
-      expect(body.data.length).toBeGreaterThan(0);
+      expect(products.length).toBeGreaterThan(0);
     },
   );
 
@@ -31,19 +25,11 @@ test.describe("Products API", () => {
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PRODUCTS, Tags.SCENARIO.POSITIVE],
     },
-    async ({ api }) => {
-      const response = await api.products.search("apple");
+    async ({ api, domain }) => {
+      const products = await api.products.search("apple");
 
-      expect(response.ok()).toBeTruthy();
-      const body = await parseApiResponse(response, productListResponseSchema);
-
-      expect(body.data.length).toBeGreaterThan(0);
-      expect(
-        body.data.some((product) =>
-          product.name.toLowerCase().includes("apple"),
-        ),
-        "Expected at least one search result with 'apple' in its name",
-      ).toBeTruthy();
+      expect(products.length).toBeGreaterThan(0);
+      await domain.expectProductsContain(products, "apple");
     },
   );
 
@@ -53,12 +39,9 @@ test.describe("Products API", () => {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PRODUCTS, Tags.SCENARIO.NEGATIVE],
     },
     async ({ api }) => {
-      const response = await api.products.search("zzzzzzzz-no-such-product");
+      const products = await api.products.search("zzzzzzzz-no-such-product");
 
-      expect(response.ok()).toBeTruthy();
-      const body = await parseApiResponse(response, productListResponseSchema);
-
-      expect(body.data).toEqual([]);
+      expect(products).toEqual([]);
     },
   );
 });
