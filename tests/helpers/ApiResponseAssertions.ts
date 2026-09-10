@@ -17,13 +17,10 @@ export class ApiResponseAssertions {
   }
 
   @step("Verify API request is rejected as unauthorized")
-  async expectUnauthorized(
-    response: APIResponse,
-    acceptedStatuses: readonly number[] = [401],
-  ): Promise<void> {
+  async expectUnauthorized(response: APIResponse): Promise<void> {
     expect(
-      acceptedStatuses,
-      `Expected ${acceptedStatuses.join(" or ")}, but got ${response.status()} ${response.statusText()}`,
-    ).toContain(response.status());
+      response.status(),
+      `Expected 401, but got ${response.status()} ${response.statusText()}`,
+    ).toBe(401);
   }
 }

@@ -83,7 +83,7 @@ export class AuthService extends ApiClient {
     return user;
   }
 
-  @step("Change password")
+  @step("Change password (raw API response)")
   async changePasswordResponse(
     token: string,
     current: string,
@@ -115,7 +115,7 @@ export class AuthService extends ApiClient {
     }
   }
 
-  @step("Retrieve list of security questions")
+  @step("Retrieve list of security questions (raw API response)")
   async getSecurityQuestionsResponse() {
     return this.get("/api/SecurityQuestions");
   }

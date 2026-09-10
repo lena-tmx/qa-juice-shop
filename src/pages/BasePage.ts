@@ -27,48 +27,41 @@ export class BasePage {
      * it. Each banner-close attempt is bounded to a few seconds (see
      * BaseBanner.clickAndWaitToDisappear) instead of the global 30s action
      * timeout, so a click blocked by a freshly-remounted banner fails fast
-     * and this loop can re-check and re-dismiss it, rather than the whole
-     * page hanging for 30s on a single stuck click.
+     * and the bounded retry can re-check and re-dismiss it, rather than the
+     * whole page hanging for 30s on a single stuck click.
      */
-    let lastError: unknown;
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        await this.welcomeBanner.closeIfVisible();
-        await this.cookieBanner.closeIfVisible();
-        return;
-      } catch (error) {
-        lastError = error;
-      }
-    }
-    throw lastError;
+    await this.retry(async () => {
+      await this.welcomeBanner.closeIfVisible();
+      await this.cookieBanner.closeIfVisible();
+    });
   }
 
   protected async clickAfterDismissingBanners(locator: Locator): Promise<void> {
-    let lastError: unknown;
-
-    for (let attempt = 1; attempt <= 3; attempt++) {
+    await this.retry(async () => {
       await this.dismissBlockingBanners();
-      try {
-        await locator.click({ timeout: 5000 });
-        return;
-      } catch (error) {
-        lastError = error;
-      }
-    }
-
-    throw lastError;
+      await locator.click({ timeout: 5000 });
+    });
   }
 
   protected async fillAfterDismissingBanners(
     locator: Locator,
     value: string,
   ): Promise<void> {
+    await this.retry(async () => {
+      await this.dismissBlockingBanners();
+      await locator.fill(value, { timeout: 5000 });
+    });
+  }
+
+  private async retry(
+    action: () => Promise<void>,
+    attempts = 3,
+  ): Promise<void> {
     let lastError: unknown;
 
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      await this.dismissBlockingBanners();
+    for (let attempt = 1; attempt <= attempts; attempt++) {
       try {
-        await locator.fill(value, { timeout: 5000 });
+        await action();
         return;
       } catch (error) {
         lastError = error;

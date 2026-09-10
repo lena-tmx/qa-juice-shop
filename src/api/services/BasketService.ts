@@ -15,7 +15,7 @@ import { parseApiResponse } from "../schemas/parseApiResponse";
 export class BasketService extends ApiClient {
   @step(
     (token: string | undefined, payload: AddBasketItemRequest) =>
-      `Add product to basket (product id: ${payload.ProductId})`,
+      `Add product to basket (product id: ${payload.ProductId}, raw API response)`,
   )
   async addItemResponse(
     token: string | undefined,
@@ -80,7 +80,7 @@ export class BasketService extends ApiClient {
 
   @step(
     (token: string, itemId: number, quantity: number) =>
-      `Update basket item quantity (id: ${itemId}) to ${quantity}`,
+      `Update basket item quantity (id: ${itemId}) to ${quantity} (raw API response)`,
   )
   async updateItemResponse(token: string, itemId: number, quantity: number) {
     return this.put(`/api/BasketItems/${itemId}`, {
@@ -109,7 +109,7 @@ export class BasketService extends ApiClient {
 
   @step(
     (token: string, itemId: number) =>
-      `Remove item from basket (id: ${itemId})`,
+      `Remove item from basket (id: ${itemId}, raw API response)`,
   )
   async deleteItemResponse(token: string, itemId: number) {
     return this.delete(`/api/BasketItems/${itemId}`, {

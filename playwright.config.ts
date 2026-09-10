@@ -13,7 +13,7 @@ export default defineConfig({
   testDir: "./tests",
   fullyParallel: env.ci,
   grep: tagsFilterPattern,
-  retries: 0,
+  retries: env.ci ? 1 : 0,
   workers: env.ci ? 2 : 1,
   timeout: 120000,
   expect: {

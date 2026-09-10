@@ -4,7 +4,7 @@ import { orderHistoryResponseSchema } from "../schemas/order.schemas";
 import { parseApiResponse } from "../schemas/parseApiResponse";
 
 export class OrderService extends ApiClient {
-  @step("Retrieve order history")
+  @step("Retrieve order history (raw API response)")
   async getHistoryResponse(token: string) {
     return this.get("/rest/order-history", {
       headers: this.authorizationHeaders(token),
