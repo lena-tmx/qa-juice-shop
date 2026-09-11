@@ -1,6 +1,6 @@
 import { test as base } from "@playwright/test";
-import { Api } from "@src/api/endpoints";
-import { Services } from "@src/api/services";
+import { ApiEndpoints } from "@src/api/endpoints/ApiEndpoints";
+import { ApiServices } from "@src/api/services/ApiServices";
 import type { AuthData } from "@src/api/types/auth.types";
 import type { TestUser } from "@src/data/factories/userFactory";
 import { PagesManager } from "@src/pages/PagesManager";
@@ -11,20 +11,20 @@ import { SearchSecurityWorkflow } from "./helpers/SearchSecurityWorkflow";
 export interface AuthenticatedApi {
   user: TestUser;
   auth: AuthData;
-  api: Api;
-  services: Services;
+  api: ApiEndpoints;
+  services: ApiServices;
 }
 
 export interface AuthenticatedUi {
   user: TestUser;
-  pages: PagesManager;
+  ui: PagesManager;
 }
 
 type TestFixtures = {
   ui: PagesManager;
   authenticatedUi: AuthenticatedUi;
-  api: Api;
-  services: Services;
+  api: ApiEndpoints;
+  services: ApiServices;
   registeredUser: TestUser;
   authenticatedApi: AuthenticatedApi;
   apiResponse: ApiResponseAssertions;
@@ -42,14 +42,14 @@ export const test = base.extend<TestFixtures>({
 
   api: [
     async ({ request }, use) => {
-      await use(new Api(request));
+      await use(new ApiEndpoints(request));
     },
     { title: "Prepare API clients" },
   ],
 
   services: [
     async ({ api }, use) => {
-      const services = new Services(api);
+      const services = new ApiServices(api);
       await use(services);
       await services.cleanup();
     },
@@ -80,7 +80,7 @@ export const test = base.extend<TestFixtures>({
       await ui.loginPage.expectLoaded();
       await ui.loginPage.login(registeredUser.email, registeredUser.password);
       await ui.homePage.expectLoaded();
-      await use({ user: registeredUser, pages: ui });
+      await use({ user: registeredUser, ui });
     },
     { title: "Prepare authenticated UI session" },
   ],

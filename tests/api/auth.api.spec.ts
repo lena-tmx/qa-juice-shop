@@ -1,5 +1,6 @@
 import { qase } from "playwright-qase-reporter";
-import { test } from "../fixtures";
+import type { LoginResponse } from "@src/api/types/auth.types";
+import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 
 test.describe("Auth API", () => {
@@ -20,6 +21,8 @@ test.describe("Auth API", () => {
       );
 
       await apiResponse.expectStatus(response, 200);
+      const body = (await response.json()) as LoginResponse;
+      expect(body.authentication.token).toBeTruthy();
     },
   );
 

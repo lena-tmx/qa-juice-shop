@@ -1,4 +1,4 @@
-import type { Api } from "../endpoints";
+import type { ApiEndpoints } from "../endpoints/ApiEndpoints";
 import { AddressService } from "./AddressService";
 import { AuthService } from "./AuthService";
 import { BasketService } from "./BasketService";
@@ -7,7 +7,7 @@ import { FeedbackService } from "./FeedbackService";
 import { OrderService } from "./OrderService";
 import { ProductsService } from "./ProductsService";
 
-export class Services {
+export class ApiServices {
   readonly address: AddressService;
   readonly auth: AuthService;
   readonly basket: BasketService;
@@ -16,7 +16,7 @@ export class Services {
   readonly order: OrderService;
   readonly products: ProductsService;
 
-  constructor(api: Api) {
+  constructor(api: ApiEndpoints) {
     this.address = new AddressService(api.address);
     this.auth = new AuthService(api.auth);
     this.basket = new BasketService(api.basket);

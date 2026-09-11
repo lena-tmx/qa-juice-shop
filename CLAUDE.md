@@ -63,7 +63,7 @@ src/
       FeedbackApi.ts
       OrderApi.ts
       ProductsApi.ts
-      index.ts      # Raw Api aggregator
+      ApiEndpoints.ts # Raw API endpoint aggregator
     reporting/
       ApiRequestReporter.ts # Playwright/Allure request and response attachments
     schemas/        # AJV response schemas and shared response parsing
@@ -76,7 +76,7 @@ src/
       OrderService.ts
       ProductsService.ts
       BaseService.ts
-      index.ts      # Services aggregator
+      ApiServices.ts # High-level API services aggregator
     types/          # Request/response type definitions
   data/
     users.ts        # Static user data
@@ -250,7 +250,7 @@ const response = await api.auth.login(email, invalidPassword);
 await apiResponse.expectStatus(response, 401);
 ```
 
-Use Services for reliable preconditions and business workflows:
+Use `ApiServices` for reliable preconditions and business workflows:
 
 ```ts
 const auth = await services.auth.login(email, password);
@@ -262,9 +262,9 @@ Avoid `request.get()` or `request.post()` in tests. Tests may use `api`, but end
 New API areas must:
 
 1. Add a `<Domain>Api` class under `src/api/endpoints` that extends `ApiClient`.
-2. Register the endpoint class in the `Api` aggregator.
+2. Register the endpoint class in the `ApiEndpoints` aggregator.
 3. Add a `<Domain>Service` under `src/api/services` when typed data, validation, or a reusable workflow is needed.
-4. Inject the endpoint class into its Service and register the Service in `Services`.
+4. Inject the endpoint class into its Service and register the Service in `ApiServices`.
 
 Do not add `Response`-suffixed method pairs to a Service. Raw and typed behavior belong to separate classes.
 

@@ -7,7 +7,7 @@ import { FeedbackApi } from "./FeedbackApi";
 import { OrderApi } from "./OrderApi";
 import { ProductsApi } from "./ProductsApi";
 
-export class Api {
+export class ApiEndpoints {
   readonly address: AddressApi;
   readonly auth: AuthApi;
   readonly basket: BasketApi;
