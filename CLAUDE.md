@@ -383,7 +383,8 @@ an HTTP call description:
   "response"/"payload"/"raw", no method-name fragments like "OrThrow". If a raw/low-level
   variant of a call must be its own step (e.g. because a higher-level method wraps it),
   name it so the reader understands it's the underlying mechanism, e.g.
-  "Fetch basket items (raw API response)" — not a near-duplicate of the wrapping step's name.
+  "Get basket items" — distinct from the wrapping "Retrieve basket items" step and without
+  exposing response-handling details.
 - Include whatever identifying detail is the actual subject of *that* action (product name,
   recipient name, rating, item id) so the step is meaningful **on its own**, since the same
   method may run standalone in one test and nested inside another business method in
