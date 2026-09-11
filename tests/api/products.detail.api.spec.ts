@@ -8,8 +8,8 @@ test.describe("Product Details API", () => {
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PRODUCTS, Tags.SCENARIO.POSITIVE],
     },
-    async ({ api }) => {
-      const product = await api.products.getById(1);
+    async ({ services }) => {
+      const product = await services.products.getById(1);
 
       expect(product.id).toBe(1);
       expect(product.name).toBeTruthy();
@@ -23,7 +23,7 @@ test.describe("Product Details API", () => {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PRODUCTS, Tags.SCENARIO.NEGATIVE],
     },
     async ({ api, apiResponse }) => {
-      const response = await api.products.getByIdResponse(99999);
+      const response = await api.products.getById(99999);
 
       await apiResponse.expectStatus(response, 404);
     },

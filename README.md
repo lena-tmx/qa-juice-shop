@@ -45,6 +45,7 @@ The repository is organized into framework code and test suites.
 - [src/components](src/components) reusable UI components used by pages
 - [src/modals](src/modals) modal and banner objects
 - [src/api/clients](src/api/clients) low-level API client logic
+- [src/api/endpoints](src/api/endpoints) domain endpoint clients that return Playwright `APIResponse`
 - [src/api/reporting](src/api/reporting) API request and response attachments for test reports
 - [src/api/services](src/api/services) high-level domain API services
 - [src/api/types](src/api/types) compile-time request and response contracts grouped by domain
@@ -203,7 +204,8 @@ The framework is built around separation of concerns:
 
 - test files contain scenarios and assertions
 - page objects contain UI actions and UI-specific expectations
-- API services contain request logic and response helpers
+- endpoint clients contain request paths, payloads, and headers
+- API services validate successful responses and implement business workflows
 - fixtures create the test dependencies used in test bodies
 
 This makes tests shorter, easier to read, and easier to maintain.
@@ -214,10 +216,12 @@ Custom fixtures are defined in [tests/fixtures.ts](tests/fixtures.ts).
 
 ### Available fixtures
 
-- `pages` access to page objects through `PagesManager`
-- `api` access to grouped API service instances
+- `ui` access to anonymous page objects through `PagesManager`
+- `authenticatedUi` page objects and a test-scoped user already logged in through the UI
+- `api` raw domain API clients that return `APIResponse`
+- `services` validated business-level API operations
 - `registeredUser` isolated API-created user scoped to one test
-- `authenticatedPages` page objects with a test-scoped user already logged in through the UI
+- `authenticatedApi` test user, authentication data, raw API clients, and business services
 - `expect` re-exported Playwright assertions
 
 ### Example
@@ -225,13 +229,13 @@ Custom fixtures are defined in [tests/fixtures.ts](tests/fixtures.ts).
 ```typescript
 import { test, expect } from "../fixtures";
 
-test("should open home page", async ({ pages }) => {
-  await pages.homePage.open();
-  await pages.homePage.expectLoaded();
+test("Home page displays the product catalog", async ({ ui }) => {
+  await ui.homePage.open();
+  await ui.homePage.expectLoaded();
 });
 ```
 
-The `pages` fixture is backed by [src/pages/PagesManager.ts](src/pages/PagesManager.ts). Add new page objects there so tests can use them through `pages` without importing each page class in [tests/fixtures.ts](tests/fixtures.ts).
+The `ui` fixture is backed by [src/pages/PagesManager.ts](src/pages/PagesManager.ts). Add new page objects there so tests can use them through `ui` without importing each page class in [tests/fixtures.ts](tests/fixtures.ts).
 
 The current `api` fixture exposes:
 
@@ -249,7 +253,7 @@ UI tests should rely on page objects instead of placing raw selectors directly i
 
 ### Recommended flow
 
-1. Use a fixture from `pages`
+1. Use `ui` for an anonymous browser session or `authenticatedUi` for a logged-in user
 2. Call page methods for actions
 3. Keep assertions in test files or page methods depending on readability
 4. Add tags to the test metadata
@@ -265,25 +269,26 @@ test(
   {
     tag: [Tags.TEST_TYPE.UI, Tags.FEATURE.SEARCH],
   },
-  async ({ pages }) => {
-    await pages.homePage.open();
-    await pages.homePage.expectLoaded();
-    await pages.homePage.navbar.search("OWASP Juice Shop Hoodie");
-    await pages.homePage.expectProductVisible("OWASP Juice Shop Hoodie");
+  async ({ ui }) => {
+    await ui.homePage.open();
+    await ui.homePage.expectLoaded();
+    await ui.homePage.navbar.search("OWASP Juice Shop Hoodie");
+    await ui.homePage.expectProductVisible("OWASP Juice Shop Hoodie");
   },
 );
 ```
 
 ## Writing API tests
 
-API tests should use domain services from [src/api/services](src/api/services) instead of constructing raw requests inside spec files.
+API tests use raw domain clients from [src/api/endpoints](src/api/endpoints) for explicit HTTP contracts and business services from [src/api/services](src/api/services) for validated workflows. Tests never construct endpoint URLs or request payload shapes directly.
 
 ### Recommended flow
 
-1. Use the `api` fixture
-2. Call the service method that matches the business action
-3. Use the typed result for business assertions; the service validates successful status and schema
-4. Use test data factories when a user or payload must be generated
+1. Use `api` when the test must assert an exact response status, including negative cases
+2. Use `services` when the test needs validated, typed data or a reliable business precondition
+3. Use `authenticatedApi` when a scenario needs an isolated registered and authenticated user
+4. Keep expected statuses explicit in raw API contract tests
+5. Use test data factories when a user or payload must be generated
 
 ### Example API test
 
@@ -296,8 +301,8 @@ test(
   {
     tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PRODUCTS, Tags.SCENARIO.POSITIVE],
   },
-  async ({ api }) => {
-    const product = await api.products.getById(1);
+  async ({ services }) => {
+    const product = await services.products.getById(1);
 
     expect(product.id).toBe(1);
     expect(product.name).toBeTruthy();
@@ -319,29 +324,31 @@ Page objects live in [src/pages](src/pages). Shared UI parts live in [src/compon
 
 ## API services
 
-API services live in [src/api/services](src/api/services). They wrap the lower-level HTTP client and expose domain-level operations.
+The API framework has separate transport, endpoint, and business layers.
 
 Each API domain keeps its responsibilities separate:
 
-- `services/ProductsService.ts` owns product endpoint paths and request execution
+- `endpoints/ProductsApi.ts` owns product endpoint paths and returns `APIResponse`
+- `services/ProductsService.ts` validates successful responses and returns typed product data
 - `types/products.types.ts` describes request and response data for TypeScript
 - `schemas/products.schemas.ts` validates real response JSON at runtime with AJV
 - `tests/api/products*.spec.ts` owns scenarios and business assertions
 
-The shared [src/api/clients/ApiClient.ts](src/api/clients/ApiClient.ts) wraps Playwright's `APIRequestContext`. It provides `get`, `post`, `put`, and `delete`, centralizes optional bearer headers, and is inherited by all domain services. Reporting is a separate responsibility: [src/api/reporting/ApiRequestReporter.ts](src/api/reporting/ApiRequestReporter.ts) generates reproducible cURL commands, masks authorization tokens, and attaches request/response details to Playwright reports. The reporter is injected into `ApiClient`, so transport code does not own report formatting.
+The shared [src/api/clients/ApiClient.ts](src/api/clients/ApiClient.ts) wraps Playwright's `APIRequestContext`. It provides `get`, `post`, `put`, and `delete`, centralizes optional bearer headers, and is inherited only by endpoint clients. Reporting is a separate responsibility: [src/api/reporting/ApiRequestReporter.ts](src/api/reporting/ApiRequestReporter.ts) generates reproducible cURL commands, masks authorization tokens, and attaches request/response details to Playwright reports.
 
-Service methods that expose a raw HTTP result return Playwright's `APIResponse`, allowing tests to assert negative and non-standard responses. A domain helper that returns typed data must have a paired raw method named with the `Response` suffix (for example, `getCaptchaResponse`) and validate that response with [src/api/schemas/parseApiResponse.ts](src/api/schemas/parseApiResponse.ts). This helper compiles and caches AJV validators and returns typed data only after validation succeeds.
+Endpoint classes such as `AuthApi` and `BasketApi` contain no assertions or schema parsing. Their methods return Playwright's `APIResponse`, allowing tests to assert exact positive and negative contracts. Services compose those clients, require successful statuses, validate bodies with [src/api/schemas/parseApiResponse.ts](src/api/schemas/parseApiResponse.ts), and add operation context to unexpected failures. This helper compiles and caches AJV validators and returns typed data only after validation succeeds.
 
 UI tests may use typed API helpers to prepare or retrieve expected test data, but page objects remain browser-only and do not depend on API services. Reusable test-only assertions and multi-domain workflows belong in [tests/helpers](tests/helpers), keeping spec files focused on readable business actions and outcomes.
 
 ### Good practices
 
-- keep endpoint details in services, not in tests
+- keep endpoint details in endpoint clients, not in tests or services
 - expose helper methods such as `registerAndLogin` when they simplify common flows
 - throw meaningful errors from service helpers when a response is unexpected
 - share low-level request handling through a base API client
-- build bearer headers through `ApiClient.authorizationHeaders` instead of repeating them in services
-- keep raw endpoint methods available and validate every typed helper with `parseApiResponse`
+- build bearer headers through `ApiClient.authorizationHeaders` instead of repeating them in endpoint clients
+- keep raw endpoint clients independent from response parsing and assertions
+- validate every typed Service result with `parseApiResponse`
 - keep TypeScript types and AJV schemas in matching domain files
 - keep status and business assertions in tests so negative responses remain accessible
 
@@ -618,7 +625,7 @@ Add new code in the layer that matches its purpose:
 - expose a new page object through `src/pages/PagesManager.ts`
 - add a reusable widget to `src/components`
 - add a modal or banner helper to `src/modals`
-- add a new API area to `src/api/services`
+- add raw endpoint calls to `src/api/endpoints` and validated workflows to `src/api/services`
 - add reusable data builders to `src/data`
 - add test-only infrastructure helpers to `tests/helpers`
 - add new reusable tags to `tests/attributes/tags.ts`

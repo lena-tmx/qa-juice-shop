@@ -1,5 +1,5 @@
 import { expect, type Page } from "@playwright/test";
-import type { ProductsService } from "@src/api/services/ProductsService";
+import type { ProductsApi } from "@src/api/endpoints/ProductsApi";
 import type { HomePage } from "@src/pages/HomePage";
 import { step } from "@src/utils/step";
 import { BrowserDialogMonitor } from "./BrowserDialogMonitor";
@@ -8,12 +8,12 @@ export class SearchSecurityWorkflow {
   constructor(
     private readonly page: Page,
     private readonly homePage: HomePage,
-    private readonly products: ProductsService,
+    private readonly products: ProductsApi,
   ) {}
 
   @step("Verify product API does not reflect an XSS payload")
   async expectApiPayloadNotReflected(payload: string): Promise<void> {
-    const response = await this.products.searchResponse(payload);
+    const response = await this.products.search(payload);
     const rawBody = await response.text();
 
     expect(

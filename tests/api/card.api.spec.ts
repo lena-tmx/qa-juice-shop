@@ -1,7 +1,6 @@
 import { qase } from "playwright-qase-reporter";
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
-import { createTestUser } from "@src/data/factories/userFactory";
 import { createTestCard } from "@src/data/factories/cardFactory";
 
 test.describe("Card API", () => {
@@ -10,11 +9,11 @@ test.describe("Card API", () => {
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PAYMENT, Tags.SCENARIO.POSITIVE],
     },
-    async ({ api }) => {
-      const auth = await api.auth.registerAndLogin(createTestUser());
+    async ({ authenticatedApi }) => {
+      const { auth, services } = authenticatedApi;
       const card = createTestCard();
 
-      const createdCard = await api.card.create(auth.token, card);
+      const createdCard = await services.card.create(auth.token, card);
 
       expect(createdCard).toMatchObject({
         fullName: card.fullName,
@@ -28,10 +27,10 @@ test.describe("Card API", () => {
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PAYMENT, Tags.SCENARIO.POSITIVE],
     },
-    async ({ api }) => {
-      const auth = await api.auth.registerAndLogin(createTestUser());
-
-      const cards = await api.card.getAll(auth.token);
+    async ({ authenticatedApi }) => {
+      const cards = await authenticatedApi.services.card.getAll(
+        authenticatedApi.auth.token,
+      );
 
       expect(cards).toEqual([]);
     },
@@ -43,9 +42,9 @@ test.describe("Card API", () => {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PAYMENT, Tags.SCENARIO.NEGATIVE],
     },
     async ({ api, apiResponse }) => {
-      const response = await api.card.createResponse("", createTestCard());
+      const response = await api.card.create("", createTestCard());
 
-      await apiResponse.expectUnauthorized(response);
+      await apiResponse.expectStatus(response, 401);
     },
   );
 });

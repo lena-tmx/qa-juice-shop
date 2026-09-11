@@ -9,12 +9,12 @@ test.describe("Product Details UI", () => {
     {
       tag: [Tags.TEST_TYPE.UI, Tags.FEATURE.PRODUCTS, Tags.SCENARIO.POSITIVE],
     },
-    async ({ api, pages }) => {
-      const product = await api.products.getById(PRODUCT_ID);
+    async ({ services, ui }) => {
+      const product = await services.products.getById(PRODUCT_ID);
 
-      await pages.homePage.open();
-      await pages.homePage.openProductDetails(product.name);
-      await pages.homePage.productDetailsModal.expectProductDetails(product);
+      await ui.homePage.open();
+      await ui.homePage.openProductDetails(product.name);
+      await ui.homePage.productDetailsModal.expectProductDetails(product);
     },
   );
 
@@ -23,12 +23,12 @@ test.describe("Product Details UI", () => {
     {
       tag: [Tags.TEST_TYPE.UI, Tags.FEATURE.PRODUCTS, Tags.SCENARIO.POSITIVE],
     },
-    async ({ api, pages }) => {
-      const product = await api.products.getById(PRODUCT_ID);
+    async ({ services, ui }) => {
+      const product = await services.products.getById(PRODUCT_ID);
 
-      await pages.homePage.open();
-      await pages.homePage.openProductDetails(product.name);
-      await pages.homePage.productDetailsModal.close();
+      await ui.homePage.open();
+      await ui.homePage.openProductDetails(product.name);
+      await ui.homePage.productDetailsModal.close();
     },
   );
 });

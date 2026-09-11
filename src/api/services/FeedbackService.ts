@@ -1,58 +1,47 @@
-import { ApiClient } from "../clients/ApiClient";
-import {
-  CreateFeedbackRequest,
-  CaptchaResponse,
-  FeedbackResponse,
-} from "../types/feedback.types";
 import { step } from "@src/utils/step";
+import type { FeedbackApi } from "../endpoints/FeedbackApi";
 import {
   captchaSchema,
   feedbackResponseSchema,
 } from "../schemas/feedback.schemas";
 import { parseApiResponse } from "../schemas/parseApiResponse";
+import type {
+  CaptchaResponse,
+  CreateFeedbackRequest,
+  FeedbackResponse,
+} from "../types/feedback.types";
+import { BaseService } from "./BaseService";
 
-export class FeedbackService extends ApiClient {
-  @step("Get CAPTCHA challenge")
-  async getCaptchaResponse(token: string) {
-    return this.get("/rest/captcha/", {
-      headers: this.authorizationHeaders(token),
-    });
+export class FeedbackService extends BaseService {
+  constructor(private readonly api: FeedbackApi) {
+    super();
   }
 
   @step("Retrieve CAPTCHA challenge for feedback form")
   async getCaptcha(token: string): Promise<CaptchaResponse> {
-    const response = await this.getCaptchaResponse(token);
-    return parseApiResponse(response, captchaSchema, [200]);
-  }
-
-  @step(
-    (token: string, payload: CreateFeedbackRequest) =>
-      `Send feedback with rating: ${payload.rating}`,
-  )
-  async submitResponse(token: string, payload: CreateFeedbackRequest) {
-    return this.post("/api/Feedbacks/", {
-      headers: this.authorizationHeaders(token, {
-        "Content-Type": "application/json",
-      }),
-      data: payload,
+    return this.execute("Retrieve CAPTCHA challenge", async () => {
+      const response = await this.api.getCaptcha(token);
+      return parseApiResponse(response, captchaSchema, [200]);
     });
   }
 
   @step(
     (token: string, payload: CreateFeedbackRequest) =>
-      `Create feedback with rating: ${payload.rating}`,
+      `Submit feedback with rating: ${payload.rating}`,
   )
   async submit(
     token: string,
     payload: CreateFeedbackRequest,
   ): Promise<FeedbackResponse> {
-    const response = await this.submitResponse(token, payload);
-    const body = await parseApiResponse(
-      response,
-      feedbackResponseSchema,
-      [201],
-    );
-    return body.data;
+    return this.execute("Submit feedback", async () => {
+      const response = await this.api.submit(token, payload);
+      const body = await parseApiResponse(
+        response,
+        feedbackResponseSchema,
+        [201],
+      );
+      return body.data;
+    });
   }
 
   @step(

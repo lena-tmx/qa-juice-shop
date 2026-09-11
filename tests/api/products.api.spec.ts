@@ -13,8 +13,8 @@ test.describe("Products API", () => {
         Tags.SCENARIO.POSITIVE,
       ],
     },
-    async ({ api }) => {
-      const products = await api.products.getAll();
+    async ({ services }) => {
+      const products = await services.products.getAll();
 
       expect(products.length).toBeGreaterThan(0);
     },
@@ -25,8 +25,8 @@ test.describe("Products API", () => {
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PRODUCTS, Tags.SCENARIO.POSITIVE],
     },
-    async ({ api, domain }) => {
-      const products = await api.products.search("apple");
+    async ({ services, domain }) => {
+      const products = await services.products.search("apple");
 
       expect(products.length).toBeGreaterThan(0);
       await domain.expectProductsContain(products, "apple");
@@ -38,8 +38,10 @@ test.describe("Products API", () => {
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.PRODUCTS, Tags.SCENARIO.NEGATIVE],
     },
-    async ({ api }) => {
-      const products = await api.products.search("zzzzzzzz-no-such-product");
+    async ({ services }) => {
+      const products = await services.products.search(
+        "zzzzzzzz-no-such-product",
+      );
 
       expect(products).toEqual([]);
     },
