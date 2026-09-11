@@ -1,7 +1,6 @@
 import { qase } from "playwright-qase-reporter";
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
-import { createTestUser } from "@src/data/factories/userFactory";
 
 test.describe("Basket Management API", () => {
   test(
@@ -9,10 +8,10 @@ test.describe("Basket Management API", () => {
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.BASKET, Tags.SCENARIO.POSITIVE],
     },
-    async ({ api }) => {
-      const auth = await api.auth.registerAndLogin(createTestUser());
+    async ({ authenticatedApi }) => {
+      const { auth, services } = authenticatedApi;
 
-      const addedItem = await api.basket.addItem(auth.token, {
+      const addedItem = await services.basket.addItem(auth.token, {
         ProductId: 1,
         BasketId: auth.basketId,
         quantity: 1,
@@ -25,7 +24,11 @@ test.describe("Basket Management API", () => {
       });
       const itemId = addedItem.id;
 
-      const updatedItem = await api.basket.updateItem(auth.token, itemId, 5);
+      const updatedItem = await services.basket.updateItem(
+        auth.token,
+        itemId,
+        5,
+      );
 
       expect(updatedItem.quantity).toBe(5);
     },
@@ -36,10 +39,10 @@ test.describe("Basket Management API", () => {
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.BASKET, Tags.SCENARIO.POSITIVE],
     },
-    async ({ api, domain }) => {
-      const auth = await api.auth.registerAndLogin(createTestUser());
+    async ({ authenticatedApi, domain }) => {
+      const { auth, services } = authenticatedApi;
 
-      const addedItem = await api.basket.addItem(auth.token, {
+      const addedItem = await services.basket.addItem(auth.token, {
         ProductId: 1,
         BasketId: auth.basketId,
         quantity: 1,
@@ -52,9 +55,9 @@ test.describe("Basket Management API", () => {
       });
       const itemId = addedItem.id;
 
-      await api.basket.deleteItem(auth.token, itemId);
+      await services.basket.deleteItem(auth.token, itemId);
 
-      const basketItems = await api.basket.getBasketItems(auth.token);
+      const basketItems = await services.basket.getItems(auth.token);
       await domain.expectBasketItemAbsent(basketItems, itemId);
     },
   );
@@ -64,10 +67,10 @@ test.describe("Basket Management API", () => {
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.BASKET, Tags.SCENARIO.POSITIVE],
     },
-    async ({ api }) => {
-      const auth = await api.auth.registerAndLogin(createTestUser());
+    async ({ authenticatedApi }) => {
+      const { auth, services } = authenticatedApi;
 
-      const basket = await api.basket.getBasket(auth.basketId, auth.token);
+      const basket = await services.basket.getBasket(auth.basketId, auth.token);
 
       expect(basket.id).toBe(auth.basketId);
       expect(basket.Products).toBeDefined();

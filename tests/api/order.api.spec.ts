@@ -1,7 +1,6 @@
 import { qase } from "playwright-qase-reporter";
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
-import { createTestUser } from "@src/data/factories/userFactory";
 
 test.describe("Order API", () => {
   test(
@@ -13,10 +12,10 @@ test.describe("Order API", () => {
         Tags.SCENARIO.POSITIVE,
       ],
     },
-    async ({ api }) => {
-      const auth = await api.auth.registerAndLogin(createTestUser());
-
-      const orders = await api.order.getHistory(auth.token);
+    async ({ authenticatedApi }) => {
+      const orders = await authenticatedApi.services.order.getHistory(
+        authenticatedApi.auth.token,
+      );
 
       expect(orders).toEqual([]);
     },
@@ -32,9 +31,9 @@ test.describe("Order API", () => {
       ],
     },
     async ({ api, apiResponse }) => {
-      const response = await api.order.getHistoryResponse("");
+      const response = await api.order.getHistory("");
 
-      await apiResponse.expectUnauthorized(response);
+      await apiResponse.expectStatus(response, 401);
     },
   );
 });

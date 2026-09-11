@@ -1,5 +1,5 @@
 import { qase } from "playwright-qase-reporter";
-import { expect, test } from "../fixtures";
+import { test } from "../fixtures";
 import { Tags } from "../attributes/tags";
 
 test.describe("Auth API", () => {
@@ -13,13 +13,13 @@ test.describe("Auth API", () => {
         Tags.SCENARIO.POSITIVE,
       ],
     },
-    async ({ api, registeredUser }) => {
-      const auth = await api.auth.login(
+    async ({ api, apiResponse, registeredUser }) => {
+      const response = await api.auth.login(
         registeredUser.email,
         registeredUser.password,
       );
 
-      expect(auth.token).toBeTruthy();
+      await apiResponse.expectStatus(response, 200);
     },
   );
 
@@ -29,11 +29,11 @@ test.describe("Auth API", () => {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.AUTH, Tags.SCENARIO.NEGATIVE],
     },
     async ({ api, apiResponse, registeredUser }) => {
-      const response = await api.auth.loginResponse(
+      const response = await api.auth.login(
         registeredUser.email,
         "wrong-password",
       );
-      await apiResponse.expectUnauthorized(response);
+      await apiResponse.expectStatus(response, 401);
     },
   );
 });

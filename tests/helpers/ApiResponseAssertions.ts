@@ -15,12 +15,4 @@ export class ApiResponseAssertions {
       `Expected ${expectedStatus}, but got ${response.status()} ${response.statusText()}`,
     ).toBe(expectedStatus);
   }
-
-  @step("Verify API request is rejected as unauthorized")
-  async expectUnauthorized(response: APIResponse): Promise<void> {
-    expect(
-      response.status(),
-      `Expected 401, but got ${response.status()} ${response.statusText()}`,
-    ).toBe(401);
-  }
 }

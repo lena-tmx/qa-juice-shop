@@ -1,7 +1,6 @@
 import { qase } from "playwright-qase-reporter";
 import { expect, test } from "../fixtures";
 import { Tags } from "../attributes/tags";
-import { createTestUser } from "@src/data/factories/userFactory";
 import { TestData } from "@src/utils/TestData";
 
 test.describe("Feedback API", () => {
@@ -10,12 +9,12 @@ test.describe("Feedback API", () => {
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.FEEDBACK, Tags.SCENARIO.POSITIVE],
     },
-    async ({ api }) => {
-      const auth = await api.auth.registerAndLogin(createTestUser());
+    async ({ authenticatedApi }) => {
+      const { auth, services } = authenticatedApi;
       const comment = TestData.getFeedbackComment();
       const rating = TestData.getRating();
 
-      const feedback = await api.feedback.submitWithCaptcha(
+      const feedback = await services.feedback.submitWithCaptcha(
         auth.token,
         comment,
         rating,
@@ -30,16 +29,16 @@ test.describe("Feedback API", () => {
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.FEEDBACK, Tags.SCENARIO.NEGATIVE],
     },
-    async ({ api, apiResponse }) => {
-      const auth = await api.auth.registerAndLogin(createTestUser());
+    async ({ authenticatedApi, apiResponse }) => {
+      const { auth, api } = authenticatedApi;
 
-      const response = await api.feedback.submitResponse(auth.token, {
+      const response = await api.feedback.submit(auth.token, {
         comment: TestData.getFeedbackComment(),
         rating: TestData.getRating(),
         captchaId: 0,
         captcha: "wrong",
       });
-      await apiResponse.expectUnauthorized(response);
+      await apiResponse.expectStatus(response, 401);
     },
   );
 });

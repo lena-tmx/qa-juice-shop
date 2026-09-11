@@ -29,12 +29,12 @@ The project demonstrates:
 ```text
 tests/
   ui/              # UI tests (login, registration, search, products, basket)
-  api/             # API tests for the domain service layer
+  api/             # API contract and domain service tests
   security/        # Security tests (IDOR, XSS, access control)
   attributes/
     tags.ts         # Tag constants for test categorization
   helpers/          # Test-only assertions, monitors, and cross-domain workflows
-  fixtures.ts      # Custom test fixtures (pages, api)
+  fixtures.ts      # Custom UI, raw API, service, and authenticated fixtures
 
 src/
   agents/
@@ -55,6 +55,15 @@ src/
   api/
     clients/
       ApiClient.ts  # Base HTTP client (get/post/put/delete)
+    endpoints/      # Raw domain API clients returning APIResponse
+      AddressApi.ts
+      AuthApi.ts
+      BasketApi.ts
+      CardApi.ts
+      FeedbackApi.ts
+      OrderApi.ts
+      ProductsApi.ts
+      index.ts      # Raw Api aggregator
     reporting/
       ApiRequestReporter.ts # Playwright/Allure request and response attachments
     schemas/        # AJV response schemas and shared response parsing
@@ -66,7 +75,8 @@ src/
       FeedbackService.ts
       OrderService.ts
       ProductsService.ts
-      index.ts      # ApiServices aggregator
+      BaseService.ts
+      index.ts      # Services aggregator
     types/          # Request/response type definitions
   data/
     users.ts        # Static user data
@@ -143,12 +153,13 @@ For feature work, prefer creating a separate branch and opening a PR.
 
 Use the existing architecture.
 
-Do not write raw Playwright API calls directly in tests when a Page Object or API Service exists.
+Do not write raw Playwright request calls directly in tests when a Page Object or domain endpoint client exists.
 
 Prefer:
 
 ```ts
 await api.auth.login(...)
+await services.auth.login(...)
 await basketPage.expectProductInBasket(...)
 await homePage.expectLoaded()
 ```
@@ -176,8 +187,12 @@ import { test, expect } from "@playwright/test";
 
 Custom fixtures provide:
 
-- `pages` — `PagesManager` instance with lazy access to all page objects
-- `api` — `ApiServices` instance with access to all API services
+- `ui` — anonymous `PagesManager` instance with lazy access to all page objects
+- `authenticatedUi` — page objects and a test-scoped user logged in through the UI
+- `api` — raw domain endpoint clients that return `APIResponse`
+- `services` — validated business services that return typed data
+- `registeredUser` — isolated test user created through `AuthService`
+- `authenticatedApi` — test user, auth data, raw API clients, and business services
 
 ## Page Object Rules
 
@@ -222,36 +237,44 @@ New page objects must:
 
 ## API Layer Rules
 
-All API calls should go through services.
+The API framework has three responsibilities:
 
-Existing services:
+1. `ApiClient` owns shared HTTP transport and request reporting.
+2. Classes under `src/api/endpoints` own paths, payloads, query parameters, and headers and return `APIResponse` without assertions or parsing.
+3. Classes under `src/api/services` require successful responses, validate AJV schemas, return typed data, and compose business workflows.
 
-- `AuthService` — register, login, createTestUser, registerAndLogin
-- `ProductsService` — getAll, search
-- `BasketService` — addItem, getBasket, getBasketItems
-
-Preferred usage:
+Use raw endpoint clients for explicit API contracts:
 
 ```ts
-api.auth.register(...)
-api.auth.login(...)
-api.products.search(...)
-api.basket.addItem(...)
+const response = await api.auth.login(email, invalidPassword);
+await apiResponse.expectStatus(response, 401);
 ```
 
-Avoid raw `request.get()` or `request.post()` in tests.
+Use Services for reliable preconditions and business workflows:
 
-New services must:
+```ts
+const auth = await services.auth.login(email, password);
+const products = await services.products.getAll();
+```
 
-1. Extend `ApiClient`
-2. Accept `APIRequestContext` in constructor
-3. Be registered in `ApiServices` (index.ts)
+Avoid `request.get()` or `request.post()` in tests. Tests may use `api`, but endpoint paths and payload construction remain encapsulated in domain endpoint classes.
+
+New API areas must:
+
+1. Add a `<Domain>Api` class under `src/api/endpoints` that extends `ApiClient`.
+2. Register the endpoint class in the `Api` aggregator.
+3. Add a `<Domain>Service` under `src/api/services` when typed data, validation, or a reusable workflow is needed.
+4. Inject the endpoint class into its Service and register the Service in `Services`.
+
+Do not add `Response`-suffixed method pairs to a Service. Raw and typed behavior belong to separate classes.
+
+Tests must not contain `try/catch`. A negative endpoint response is asserted directly in the test; a Service catches unexpected transport, parsing, and workflow failures only to add clear operation context, and must preserve the original error as its cause.
 
 ### Request/response reporting
 
 `ApiClient`'s `get`/`post`/`put`/`delete` automatically attach the outgoing request as a
 runnable `curl` command and the response (status + body) to the current Allure step, for
-every API call, with no extra code needed in services or tests. `Authorization` header
+every endpoint call, with no extra code needed in endpoint classes, services, or tests. `Authorization` header
 values are masked (`Bearer ***`) in the attachment. This is why an API test's Allure step
 doesn't need to restate the outcome in its name — expand the step to see exactly what was
 sent and what came back.
@@ -432,6 +455,7 @@ the codebase and all repository-facing collaboration are English-only.
 |------|---------|---------|
 | Test file | `<feature>.spec.ts` or `<feature>.<type>.spec.ts` | `login.spec.ts`, `auth.api.spec.ts`, `xss.security.spec.ts` |
 | Page Object | `<Name>Page.ts` | `LoginPage.ts`, `BasketPage.ts` |
+| API Endpoint | `<Name>Api.ts` | `AuthApi.ts`, `BasketApi.ts` |
 | API Service | `<Name>Service.ts` | `AuthService.ts`, `ProductsService.ts` |
 | API Types | `<name>.types.ts` | `auth.types.ts`, `basket.types.ts` |
 | Component | `<Name>.ts` | `Navbar.ts` |
@@ -561,9 +585,9 @@ Before every commit, verify:
 ## Test Isolation Rules
 
 - Each test must be independent and not rely on state from other tests
-- Use `test.beforeEach` (not `test.beforeAll`) for per-test setup when using fixtures like `api` or `pages` — these are per-test scoped in Playwright
+- Use `test.beforeEach` (not `test.beforeAll`) for per-test setup when using fixtures like `api`, `services`, or `ui` — these are per-test scoped in Playwright
 - `test.beforeAll` is acceptable only for truly shared setup that does not use per-test fixtures
-- Always create fresh test users via `createTestUser()` or `api.auth.createTestUser()` instead of reusing static credentials across tests
+- Always create fresh test users via `createTestUser()`, `services.auth.createTestUser()`, or an authenticated fixture instead of reusing static credentials across tests
 - Clean up created state when possible or rely on unique data to avoid collisions
 
 ## Locator Best Practices

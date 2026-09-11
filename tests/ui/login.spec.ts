@@ -8,15 +8,12 @@ test.describe(`Login UI`, () => {
     {
       tag: [Tags.TEST_TYPE.UI, Tags.FEATURE.AUTH],
     },
-    async ({ pages, registeredUser }) => {
-      await pages.homePage.open();
-      await pages.loginPage.open();
-      await pages.loginPage.expectLoaded();
-      await pages.loginPage.login(
-        registeredUser.email,
-        registeredUser.password,
-      );
-      await pages.homePage.navbar.expectUserLoggedIn(registeredUser.email);
+    async ({ ui, registeredUser }) => {
+      await ui.homePage.open();
+      await ui.loginPage.open();
+      await ui.loginPage.expectLoaded();
+      await ui.loginPage.login(registeredUser.email, registeredUser.password);
+      await ui.homePage.navbar.expectUserLoggedIn(registeredUser.email);
     },
   );
 
@@ -25,18 +22,15 @@ test.describe(`Login UI`, () => {
     {
       tag: [Tags.TEST_TYPE.UI, Tags.FEATURE.AUTH],
     },
-    async ({ pages, registeredUser }) => {
-      await pages.homePage.open();
-      await pages.loginPage.open();
-      await pages.loginPage.expectLoaded();
-      await pages.loginPage.login(
-        registeredUser.email,
-        registeredUser.password,
-      );
-      await pages.homePage.navbar.expectUserLoggedIn(registeredUser.email);
-      await pages.homePage.dismissBlockingBanners();
-      await pages.homePage.navbar.logout();
-      await pages.homePage.navbar.expectUserLoggedOut(registeredUser.email);
+    async ({ ui, registeredUser }) => {
+      await ui.homePage.open();
+      await ui.loginPage.open();
+      await ui.loginPage.expectLoaded();
+      await ui.loginPage.login(registeredUser.email, registeredUser.password);
+      await ui.homePage.navbar.expectUserLoggedIn(registeredUser.email);
+      await ui.homePage.dismissBlockingBanners();
+      await ui.homePage.navbar.logout();
+      await ui.homePage.navbar.expectUserLoggedOut(registeredUser.email);
     },
   );
 });

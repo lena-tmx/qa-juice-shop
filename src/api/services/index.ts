@@ -1,29 +1,29 @@
-import { APIRequestContext } from "@playwright/test";
-import { AuthService } from "./AuthService";
-import { ProductsService } from "./ProductsService";
-import { BasketService } from "./BasketService";
+import type { Api } from "../endpoints";
 import { AddressService } from "./AddressService";
+import { AuthService } from "./AuthService";
+import { BasketService } from "./BasketService";
 import { CardService } from "./CardService";
 import { FeedbackService } from "./FeedbackService";
 import { OrderService } from "./OrderService";
+import { ProductsService } from "./ProductsService";
 
-export class ApiServices {
-  readonly auth: AuthService;
-  readonly products: ProductsService;
-  readonly basket: BasketService;
+export class Services {
   readonly address: AddressService;
+  readonly auth: AuthService;
+  readonly basket: BasketService;
   readonly card: CardService;
   readonly feedback: FeedbackService;
   readonly order: OrderService;
+  readonly products: ProductsService;
 
-  constructor(request: APIRequestContext) {
-    this.auth = new AuthService(request);
-    this.products = new ProductsService(request);
-    this.basket = new BasketService(request);
-    this.address = new AddressService(request);
-    this.card = new CardService(request);
-    this.feedback = new FeedbackService(request);
-    this.order = new OrderService(request);
+  constructor(api: Api) {
+    this.address = new AddressService(api.address);
+    this.auth = new AuthService(api.auth);
+    this.basket = new BasketService(api.basket);
+    this.card = new CardService(api.card);
+    this.feedback = new FeedbackService(api.feedback);
+    this.order = new OrderService(api.order);
+    this.products = new ProductsService(api.products);
   }
 
   async cleanup(): Promise<void> {

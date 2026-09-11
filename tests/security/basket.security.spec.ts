@@ -17,9 +17,9 @@ test.describe("Broken Access Control", () => {
       ],
     },
     async ({ api, apiResponse }) => {
-      const response = await api.basket.getBasketResponse(1);
+      const response = await api.basket.getBasket(1);
 
-      await apiResponse.expectUnauthorized(response);
+      await apiResponse.expectStatus(response, 401);
     },
   );
 
@@ -35,17 +35,14 @@ test.describe("Broken Access Control", () => {
         Tags.PRIORITY.CRITICAL,
       ],
     },
-    async ({ api, apiResponse }) => {
+    async ({ api, services, apiResponse }) => {
       const user1 = createTestUser();
-      const auth1 = await api.auth.registerAndLogin(user1);
+      const auth1 = await services.auth.registerAndLogin(user1);
 
       const user2 = createTestUser();
-      const auth2 = await api.auth.registerAndLogin(user2);
+      const auth2 = await services.auth.registerAndLogin(user2);
 
-      const response = await api.basket.getBasketResponse(
-        auth1.basketId,
-        auth2.token,
-      );
+      const response = await api.basket.getBasket(auth1.basketId, auth2.token);
 
       /**
        * Expected (secure) behavior: 401, matching this app's own pattern for
@@ -53,7 +50,7 @@ test.describe("Broken Access Control", () => {
        * currently vulnerable and returns 200 here — that's the bug this
        * test exists to catch, not a flaky assertion.
        */
-      await apiResponse.expectUnauthorized(response);
+      await apiResponse.expectStatus(response, 401);
     },
   );
 
@@ -68,20 +65,20 @@ test.describe("Broken Access Control", () => {
         Tags.PRIORITY.CRITICAL,
       ],
     },
-    async ({ api, apiResponse }) => {
+    async ({ api, services, apiResponse }) => {
       const user1 = createTestUser();
-      const auth1 = await api.auth.registerAndLogin(user1);
+      const auth1 = await services.auth.registerAndLogin(user1);
 
       const user2 = createTestUser();
-      const auth2 = await api.auth.registerAndLogin(user2);
+      const auth2 = await services.auth.registerAndLogin(user2);
 
-      const response = await api.basket.addItemResponse(auth1.token, {
+      const response = await api.basket.addItem(auth1.token, {
         ProductId: 1,
         BasketId: auth2.basketId,
         quantity: 1,
       });
 
-      await apiResponse.expectUnauthorized(response);
+      await apiResponse.expectStatus(response, 401);
     },
   );
 });

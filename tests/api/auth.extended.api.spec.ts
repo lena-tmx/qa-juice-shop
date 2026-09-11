@@ -10,8 +10,8 @@ test.describe("Extended Authentication API", () => {
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.AUTH, Tags.SCENARIO.POSITIVE],
     },
-    async ({ api }) => {
-      const securityQuestions = await api.auth.getSecurityQuestions();
+    async ({ services }) => {
+      const securityQuestions = await services.auth.getSecurityQuestions();
       const expectedQuestions = Object.values(SecurityQuestions).map(
         ({ text }) => text,
       );
@@ -33,9 +33,9 @@ test.describe("Extended Authentication API", () => {
         Tags.SCENARIO.POSITIVE,
       ],
     },
-    async ({ api }) => {
+    async ({ services }) => {
       const user = createTestUser();
-      const registeredUser = await api.auth.register(user);
+      const registeredUser = await services.auth.register(user);
 
       expect(registeredUser.email).toBe(user.email);
     },
@@ -50,11 +50,11 @@ test.describe("Extended Authentication API", () => {
         Tags.SCENARIO.NEGATIVE,
       ],
     },
-    async ({ api, apiResponse }) => {
+    async ({ api, services, apiResponse }) => {
       const user = createTestUser();
-      await api.auth.register(user);
+      await services.auth.register(user);
 
-      const response = await api.auth.registerResponse(user);
+      const response = await api.auth.register(user);
 
       await apiResponse.expectStatus(response, 400);
     },
@@ -65,16 +65,15 @@ test.describe("Extended Authentication API", () => {
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.AUTH, Tags.SCENARIO.POSITIVE],
     },
-    async ({ api }) => {
-      const user = createTestUser();
-      const auth = await api.auth.registerAndLogin(user);
+    async ({ authenticatedApi }) => {
+      const { user, auth, services } = authenticatedApi;
 
-      await api.auth.changePassword(
+      await services.auth.changePassword(
         auth.token,
         user.password,
         "NewSecurePass1!",
       );
-      const authWithNewPassword = await api.auth.login(
+      const authWithNewPassword = await services.auth.login(
         user.email,
         "NewSecurePass1!",
       );
@@ -91,18 +90,20 @@ test.describe("Extended Authentication API", () => {
     {
       tag: [Tags.TEST_TYPE.API, Tags.FEATURE.AUTH, Tags.SCENARIO.NEGATIVE],
     },
-    async ({ api, apiResponse }) => {
-      const user = createTestUser();
-      const auth = await api.auth.registerAndLogin(user);
+    async ({ authenticatedApi, apiResponse }) => {
+      const { user, auth, api, services } = authenticatedApi;
 
-      const response = await api.auth.changePasswordResponse(
+      const response = await api.auth.changePassword(
         auth.token,
         "wrong-current-password",
         "NewPass1!",
       );
-      await apiResponse.expectUnauthorized(response);
+      await apiResponse.expectStatus(response, 401);
 
-      const unchangedAuth = await api.auth.login(user.email, user.password);
+      const unchangedAuth = await services.auth.login(
+        user.email,
+        user.password,
+      );
       expect(unchangedAuth.token).toBeTruthy();
     },
   );

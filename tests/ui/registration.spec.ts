@@ -14,19 +14,19 @@ test.describe("Registration UI", () => {
           Tags.SCENARIO.POSITIVE,
         ],
       },
-      async ({ pages }) => {
+      async ({ ui }) => {
         const user = createTestUser({
           securityQuestion,
         });
 
-        await pages.registerPage.open();
-        await pages.registerPage.expectLoaded();
-        await pages.registerPage.register(user);
-        await pages.registerPage.expectRegistrationSucceeded();
+        await ui.registerPage.open();
+        await ui.registerPage.expectLoaded();
+        await ui.registerPage.register(user);
+        await ui.registerPage.expectRegistrationSucceeded();
 
-        await pages.loginPage.expectLoaded();
-        await pages.loginPage.login(user.email, user.password);
-        await pages.homePage.navbar.expectUserLoggedIn(user.email);
+        await ui.loginPage.expectLoaded();
+        await ui.loginPage.login(user.email, user.password);
+        await ui.homePage.navbar.expectUserLoggedIn(user.email);
       },
     );
   }

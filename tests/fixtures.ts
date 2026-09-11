@@ -1,23 +1,39 @@
 import { test as base } from "@playwright/test";
-import { ApiServices } from "@src/api/services";
-import { PagesManager } from "@src/pages/PagesManager";
+import { Api } from "@src/api/endpoints";
+import { Services } from "@src/api/services";
+import type { AuthData } from "@src/api/types/auth.types";
 import type { TestUser } from "@src/data/factories/userFactory";
+import { PagesManager } from "@src/pages/PagesManager";
 import { ApiResponseAssertions } from "./helpers/ApiResponseAssertions";
-import { SearchSecurityWorkflow } from "./helpers/SearchSecurityWorkflow";
 import { DomainAssertions } from "./helpers/DomainAssertions";
+import { SearchSecurityWorkflow } from "./helpers/SearchSecurityWorkflow";
+
+export interface AuthenticatedApi {
+  user: TestUser;
+  auth: AuthData;
+  api: Api;
+  services: Services;
+}
+
+export interface AuthenticatedUi {
+  user: TestUser;
+  pages: PagesManager;
+}
 
 type TestFixtures = {
-  pages: PagesManager;
-  api: ApiServices;
+  ui: PagesManager;
+  authenticatedUi: AuthenticatedUi;
+  api: Api;
+  services: Services;
   registeredUser: TestUser;
-  authenticatedPages: PagesManager;
+  authenticatedApi: AuthenticatedApi;
   apiResponse: ApiResponseAssertions;
   searchSecurity: SearchSecurityWorkflow;
   domain: DomainAssertions;
 };
 
 export const test = base.extend<TestFixtures>({
-  pages: [
+  ui: [
     async ({ page }, use) => {
       await use(new PagesManager(page));
     },
@@ -26,34 +42,47 @@ export const test = base.extend<TestFixtures>({
 
   api: [
     async ({ request }, use) => {
-      const services = new ApiServices(request);
+      await use(new Api(request));
+    },
+    { title: "Prepare API clients" },
+  ],
+
+  services: [
+    async ({ api }, use) => {
+      const services = new Services(api);
       await use(services);
       await services.cleanup();
     },
-    { title: "Prepare API services and clean up test users" },
+    { title: "Prepare business services and clean up test data" },
   ],
 
   registeredUser: [
-    async ({ api }, use) => {
-      const user = await api.auth.createTestUser();
+    async ({ services }, use) => {
+      const user = await services.auth.createTestUser();
       await use(user);
     },
     { title: "Create registered test user" },
   ],
 
-  authenticatedPages: [
-    async ({ pages, registeredUser }, use) => {
-      await pages.homePage.open();
-      await pages.loginPage.open();
-      await pages.loginPage.expectLoaded();
-      await pages.loginPage.login(
-        registeredUser.email,
-        registeredUser.password,
-      );
-      await pages.homePage.expectLoaded();
-      await use(pages);
+  authenticatedApi: [
+    async ({ api, services }, use) => {
+      const user = await services.auth.createTestUser();
+      const auth = await services.auth.login(user.email, user.password);
+      await use({ user, auth, api, services });
     },
-    { title: "Open authenticated user session" },
+    { title: "Prepare authenticated API session" },
+  ],
+
+  authenticatedUi: [
+    async ({ ui, registeredUser }, use) => {
+      await ui.homePage.open();
+      await ui.loginPage.open();
+      await ui.loginPage.expectLoaded();
+      await ui.loginPage.login(registeredUser.email, registeredUser.password);
+      await ui.homePage.expectLoaded();
+      await use({ user: registeredUser, pages: ui });
+    },
+    { title: "Prepare authenticated UI session" },
   ],
 
   apiResponse: [
@@ -66,8 +95,8 @@ export const test = base.extend<TestFixtures>({
   ],
 
   searchSecurity: [
-    async ({ page, pages, api }, use) => {
-      await use(new SearchSecurityWorkflow(page, pages.homePage, api.products));
+    async ({ page, ui, api }, use) => {
+      await use(new SearchSecurityWorkflow(page, ui.homePage, api.products));
     },
     { title: "Prepare search security workflow" },
   ],

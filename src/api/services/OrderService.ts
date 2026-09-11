@@ -1,24 +1,24 @@
-import { ApiClient } from "../clients/ApiClient";
 import { step } from "@src/utils/step";
+import type { OrderApi } from "../endpoints/OrderApi";
 import { orderHistoryResponseSchema } from "../schemas/order.schemas";
 import { parseApiResponse } from "../schemas/parseApiResponse";
+import { BaseService } from "./BaseService";
 
-export class OrderService extends ApiClient {
-  @step("Get order history")
-  async getHistoryResponse(token: string) {
-    return this.get("/rest/order-history", {
-      headers: this.authorizationHeaders(token),
-    });
+export class OrderService extends BaseService {
+  constructor(private readonly api: OrderApi) {
+    super();
   }
 
   @step("Retrieve order history")
   async getHistory(token: string): Promise<Record<string, unknown>[]> {
-    const response = await this.getHistoryResponse(token);
-    const body = await parseApiResponse(
-      response,
-      orderHistoryResponseSchema,
-      [200],
-    );
-    return body.data;
+    return this.execute("Retrieve order history", async () => {
+      const response = await this.api.getHistory(token);
+      const body = await parseApiResponse(
+        response,
+        orderHistoryResponseSchema,
+        [200],
+      );
+      return body.data;
+    });
   }
 }
