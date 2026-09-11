@@ -582,7 +582,7 @@ The project is configured with [Playwright MCP](.mcp.json) for AI-assisted brows
 
 ### CI Integration
 
-In GitHub Actions, retries are disabled so product defects are not hidden by automatic reruns. The suite is distributed between two independent runners, and their results are merged before reporting. After each run:
+In GitHub Actions, each failed test can retry once so transient failures are reported as flaky; local runs do not retry. A passing retry does not replace root-cause investigation. The suite is distributed between two independent runners, and their results are merged before reporting. After each run:
 
 1. Both shards upload their results to one shared Qase run, which is then completed
 2. Playwright JSON/blob and Allure results from both shards are merged

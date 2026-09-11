@@ -9,7 +9,7 @@ import {
 import { parseApiResponse } from "../schemas/parseApiResponse";
 
 export class CardService extends ApiClient {
-  @step("Request saved payment cards (raw API response)")
+  @step("Get saved payment cards")
   async getAllResponse(token: string) {
     return this.get("/api/Cards/", {
       headers: this.authorizationHeaders(token),

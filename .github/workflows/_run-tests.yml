@@ -215,7 +215,7 @@ jobs:
 
           if [ "$PROJECT" != "all" ]; then
             case "$PROJECT" in
-              chromium|firefox|webkit) CMD+=(--project="$PROJECT") ;;
+              chromium|firefox) CMD+=(--project="$PROJECT") ;;
               *) echo "::error::Unknown project: $PROJECT"; exit 1 ;;
             esac
           fi

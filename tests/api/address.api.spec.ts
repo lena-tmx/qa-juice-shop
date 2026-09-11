@@ -49,7 +49,7 @@ test.describe("Address API", () => {
         createTestAddress(),
       );
 
-      await apiResponse.expectUnauthorized(response, [401, 403]);
+      await apiResponse.expectUnauthorized(response);
     },
   );
 });

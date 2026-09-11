@@ -34,7 +34,7 @@ test.describe("Order API", () => {
     async ({ api, apiResponse }) => {
       const response = await api.order.getHistoryResponse("");
 
-      await apiResponse.expectUnauthorized(response, [401, 403]);
+      await apiResponse.expectUnauthorized(response);
     },
   );
 });

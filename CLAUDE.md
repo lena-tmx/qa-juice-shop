@@ -28,15 +28,19 @@ The project demonstrates:
 
 ```text
 tests/
-  ui/              # UI tests (login, search, basket)
-  api/             # API tests (auth, products, basket)
+  ui/              # UI tests (login, registration, search, products, basket)
+  api/             # API tests for the domain service layer
   security/        # Security tests (IDOR, XSS, access control)
   attributes/
     tags.ts         # Tag constants for test categorization
+  helpers/          # Test-only assertions, monitors, and cross-domain workflows
   fixtures.ts      # Custom test fixtures (pages, api)
 
 src/
-  pages/           # Page Objects (BasePage, HomePage, LoginPage, BasketPage)
+  agents/
+    analyzer/       # Playwright JSON result analysis
+    coverage/       # Feature, route, and API coverage reporting
+  pages/           # Page Objects (BasePage, HomePage, LoginPage, RegisterPage, BasketPage)
     PagesManager.ts # Lazy-init registry for all page objects
   components/
     Navbar.ts       # Shared navbar component
@@ -46,19 +50,26 @@ src/
   modals/
     BaseBanner.ts   # Base class for dismissable banners
     CookieBanner.ts
+    ProductDetailsModal.ts
     WelcomeBanner.ts
   api/
     clients/
       ApiClient.ts  # Base HTTP client (get/post/put/delete)
+    reporting/
+      ApiRequestReporter.ts # Playwright/Allure request and response attachments
+    schemas/        # AJV response schemas and shared response parsing
     services/       # Business-level API wrappers
+      AddressService.ts
       AuthService.ts
-      ProductsService.ts
       BasketService.ts
+      CardService.ts
+      FeedbackService.ts
+      OrderService.ts
+      ProductsService.ts
       index.ts      # ApiServices aggregator
     types/          # Request/response type definitions
   data/
     users.ts        # Static user data
-    products.ts     # Static product data
     securityQuestions.ts
     factories/
       userFactory.ts # createTestUser() factory
@@ -273,6 +284,12 @@ Optional tags:
 - `SCENARIO` — `@positive`, `@negative`
 - `PRIORITY` — `@critical`
 
+Feature tags such as `@sql-injection`, `@headers`, `@session`, `@admin`, and `@profile`
+are intentionally reserved for documented coverage gaps and upcoming tests. Do not remove
+an unused feature tag solely because no current spec references it: the coverage tracker
+uses the shared taxonomy to report untested areas. Add a corresponding spec when that
+roadmap area is implemented.
+
 Usage:
 
 ```ts
@@ -473,6 +490,12 @@ expect(status, `Expected 500, but got ${status}`).toBe(500);
 ```
 
 ## UI Stability Rules
+
+Playwright retries are disabled locally and limited to one retry in CI
+(`retries: env.ci ? 1 : 0`). The CI retry provides evidence for classifying a transient
+failure as flaky, but a passing retry must not be treated as a substitute for fixing the
+underlying instability. A bounded action-level retry is acceptable only for a diagnosed
+transient application behavior, such as Juice Shop remounting a blocking banner.
 
 Do not use:
 

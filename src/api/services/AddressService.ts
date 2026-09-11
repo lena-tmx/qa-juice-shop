@@ -9,7 +9,7 @@ import {
 import { parseApiResponse } from "../schemas/parseApiResponse";
 
 export class AddressService extends ApiClient {
-  @step("Request saved delivery addresses (raw API response)")
+  @step("Get saved delivery addresses")
   async getAllResponse(token: string) {
     return this.get("/api/Addresss/", {
       headers: this.authorizationHeaders(token),

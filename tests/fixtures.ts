@@ -17,44 +17,68 @@ type TestFixtures = {
 };
 
 export const test = base.extend<TestFixtures>({
-  pages: async ({ page }, use) => {
-    await use(new PagesManager(page));
-  },
+  pages: [
+    async ({ page }, use) => {
+      await use(new PagesManager(page));
+    },
+    { title: "Prepare application pages" },
+  ],
 
-  api: async ({ request }, use) => {
-    const services = new ApiServices(request);
-    await use(services);
-    await services.cleanup();
-  },
+  api: [
+    async ({ request }, use) => {
+      const services = new ApiServices(request);
+      await use(services);
+      await services.cleanup();
+    },
+    { title: "Prepare API services and clean up test users" },
+  ],
 
-  registeredUser: async ({ api }, use) => {
-    const user = await api.auth.createTestUser();
-    await use(user);
-  },
+  registeredUser: [
+    async ({ api }, use) => {
+      const user = await api.auth.createTestUser();
+      await use(user);
+    },
+    { title: "Create registered test user" },
+  ],
 
-  authenticatedPages: async ({ pages, registeredUser }, use) => {
-    await pages.homePage.open();
-    await pages.loginPage.open();
-    await pages.loginPage.expectLoaded();
-    await pages.loginPage.login(registeredUser.email, registeredUser.password);
-    await pages.homePage.expectLoaded();
-    await use(pages);
-  },
+  authenticatedPages: [
+    async ({ pages, registeredUser }, use) => {
+      await pages.homePage.open();
+      await pages.loginPage.open();
+      await pages.loginPage.expectLoaded();
+      await pages.loginPage.login(
+        registeredUser.email,
+        registeredUser.password,
+      );
+      await pages.homePage.expectLoaded();
+      await use(pages);
+    },
+    { title: "Open authenticated user session" },
+  ],
 
-  // Playwright requires an object pattern even when a fixture has no dependencies.
-  // eslint-disable-next-line no-empty-pattern
-  apiResponse: async ({}, use) => {
-    await use(new ApiResponseAssertions());
-  },
+  apiResponse: [
+    // Playwright requires an object pattern even when a fixture has no dependencies.
+    // eslint-disable-next-line no-empty-pattern
+    async ({}, use) => {
+      await use(new ApiResponseAssertions());
+    },
+    { title: "Prepare API response assertions" },
+  ],
 
-  searchSecurity: async ({ page, pages, api }, use) => {
-    await use(new SearchSecurityWorkflow(page, pages.homePage, api.products));
-  },
+  searchSecurity: [
+    async ({ page, pages, api }, use) => {
+      await use(new SearchSecurityWorkflow(page, pages.homePage, api.products));
+    },
+    { title: "Prepare search security workflow" },
+  ],
 
-  // eslint-disable-next-line no-empty-pattern
-  domain: async ({}, use) => {
-    await use(new DomainAssertions());
-  },
+  domain: [
+    // eslint-disable-next-line no-empty-pattern
+    async ({}, use) => {
+      await use(new DomainAssertions());
+    },
+    { title: "Prepare domain assertions" },
+  ],
 });
 
 export { expect } from "@playwright/test";

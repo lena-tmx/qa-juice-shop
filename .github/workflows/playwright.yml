@@ -29,7 +29,6 @@ on:
         options:
           - chromium
           - firefox
-          - webkit
           - all
       grep:
         description: "Optional grep"
