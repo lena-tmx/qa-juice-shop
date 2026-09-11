@@ -8,7 +8,7 @@ import { parseApiResponse } from "../schemas/parseApiResponse";
 import type { Product } from "../types/products.types";
 
 export class ProductsService extends ApiClient {
-  @step("Request product catalog (raw API response)")
+  @step("Get product catalog")
   async getAllResponse() {
     return this.get("/api/Products");
   }
@@ -24,7 +24,7 @@ export class ProductsService extends ApiClient {
     return body.data;
   }
 
-  @step((query: string) => `Request product search: ${query}`)
+  @step((query: string) => `Get products matching search query: ${query}`)
   async searchResponse(query: string) {
     return this.get(`/rest/products/search?q=${encodeURIComponent(query)}`);
   }
@@ -40,12 +40,12 @@ export class ProductsService extends ApiClient {
     return body.data;
   }
 
-  @step((id: number) => `Request product details (id: ${id})`)
+  @step((id: number) => `Get product details by id: ${id}`)
   async getByIdResponse(id: number) {
     return this.get(`/api/Products/${id}`);
   }
 
-  @step((id: number) => `Get product information (id: ${id})`)
+  @step((id: number) => `Retrieve product information by id: ${id}`)
   async getById(id: number): Promise<Product> {
     const response = await this.getByIdResponse(id);
     const body = await parseApiResponse(response, productResponseSchema, [200]);

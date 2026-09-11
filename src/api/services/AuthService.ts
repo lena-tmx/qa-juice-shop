@@ -83,7 +83,7 @@ export class AuthService extends ApiClient {
     return user;
   }
 
-  @step("Change password (raw API response)")
+  @step("Update password")
   async changePasswordResponse(
     token: string,
     current: string,
@@ -115,7 +115,7 @@ export class AuthService extends ApiClient {
     }
   }
 
-  @step("Retrieve list of security questions (raw API response)")
+  @step("Get list of security questions")
   async getSecurityQuestionsResponse() {
     return this.get("/api/SecurityQuestions");
   }
@@ -132,7 +132,8 @@ export class AuthService extends ApiClient {
   }
 
   @step(
-    (userId: number, _adminToken: string) => `Delete test user (id: ${userId})`,
+    (userId: number, _adminToken: string) =>
+      `Delete test user by id: ${userId}`,
   )
   async deleteUserResponse(userId: number, adminToken: string) {
     return this.delete(`/api/Users/${userId}`, {

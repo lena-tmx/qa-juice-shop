@@ -12,7 +12,7 @@ import {
 import { parseApiResponse } from "../schemas/parseApiResponse";
 
 export class FeedbackService extends ApiClient {
-  @step("Request CAPTCHA challenge (raw API response)")
+  @step("Get CAPTCHA challenge")
   async getCaptchaResponse(token: string) {
     return this.get("/rest/captcha/", {
       headers: this.authorizationHeaders(token),
@@ -27,7 +27,7 @@ export class FeedbackService extends ApiClient {
 
   @step(
     (token: string, payload: CreateFeedbackRequest) =>
-      `Submit feedback: ${payload.rating} star rating`,
+      `Send feedback with rating: ${payload.rating}`,
   )
   async submitResponse(token: string, payload: CreateFeedbackRequest) {
     return this.post("/api/Feedbacks/", {
@@ -40,7 +40,7 @@ export class FeedbackService extends ApiClient {
 
   @step(
     (token: string, payload: CreateFeedbackRequest) =>
-      `Submit feedback: ${payload.rating} star rating`,
+      `Create feedback with rating: ${payload.rating}`,
   )
   async submit(
     token: string,
